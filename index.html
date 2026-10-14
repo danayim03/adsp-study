@@ -1,0 +1,998 @@
+<title>ADsP 스터디룸</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@700&display=swap">
+<style>
+/* Layout concept: a grid-paper notebook. Ink-blue for actions, highlighter yellow reserved for exam points,
+   one colour per 과목. Single column of cards, quiz is one question per screen. */
+:root{
+  --bg:#f2f4f8; --paper:#ffffff; --paper2:#f6f8fb; --ink:#142033; --muted:#5a6779; --line:#d6dce6; --grid:rgba(20,32,51,.045);
+  --accent:#2358d6; --accent-ink:#ffffff; --accent-soft:#e3ebff;
+  --hi:#ffe38a; --hi-ink:#3a2c00;
+  --ok:#157a4c; --ok-soft:#dff3e8; --bad:#b8322b; --bad-soft:#fbe4e2;
+  --s1:#2358d6; --s2:#7a47c9; --s3:#0e8a7d;
+  --f-body:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --f-disp:'Noto Serif KR','Batang',serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1522; --paper:#161f2e; --paper2:#1b2638; --ink:#e7edf7; --muted:#9aa8bc; --line:#2a3750; --grid:rgba(231,237,247,.045);
+    --accent:#86a8ff; --accent-ink:#0b1426; --accent-soft:#1e2d52;
+    --hi:#5b4a0a; --hi-ink:#ffeaa3;
+    --ok:#58d49b; --ok-soft:#14352a; --bad:#ff8a82; --bad-soft:#3b1d1d;
+    --s1:#86a8ff; --s2:#b99aff; --s3:#4fd3c4;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1522; --paper:#161f2e; --paper2:#1b2638; --ink:#e7edf7; --muted:#9aa8bc; --line:#2a3750; --grid:rgba(231,237,247,.045);
+  --accent:#86a8ff; --accent-ink:#0b1426; --accent-soft:#1e2d52;
+  --hi:#5b4a0a; --hi-ink:#ffeaa3;
+  --ok:#58d49b; --ok-soft:#14352a; --bad:#ff8a82; --bad-soft:#3b1d1d;
+  --s1:#86a8ff; --s2:#b99aff; --s3:#4fd3c4;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0; min-height:100vh;
+}
+.wrap{max-width:900px;margin:0 auto;padding-block:20px 56px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-disp);line-height:1.35;margin:0;text-wrap:balance}
+p{margin:0}
+ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:6px}
+code,pre{font-family:var(--f-mono)}
+pre{margin:0;overflow-x:auto;font-size:13.5px;line-height:1.55;white-space:pre}
+.mono{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.04em}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:18px}
+.brand{background:none;border:0;padding:0;font-family:var(--f-disp);font-weight:700;font-size:19px;display:flex;align-items:center;gap:10px}
+.brand i{display:inline-block;width:12px;height:12px;background:var(--hi);border:2px solid var(--ink)}
+.tbtn{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:13px}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:10px 16px;font-weight:500;min-height:44px}
+.btn:hover{border-color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent}
+.btn[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+
+/* home */
+.hero{display:flex;flex-direction:column;gap:12px;padding:8px 0 22px}
+.hero h1{font-size:clamp(28px,6vw,40px)}
+.hero p{color:var(--muted);max-width:60ch}
+.exam{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:6px 0 16px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-family:var(--f-mono);font-size:24px;font-weight:500;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.actions{margin-bottom:30px}
+.subj{margin-top:34px}
+.subj-h{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.subj-h .sq{width:14px;height:14px;display:inline-block;flex:none;align-self:center}
+.subj-h h2{font-size:22px}
+.subj-h .mono{color:var(--muted)}
+.secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:12px}
+.sec{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sec h3{font-size:18px}
+.sec .blurb{font-size:14px;color:var(--muted);flex:1}
+.sec .no{color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted)}
+.pill.ok{color:var(--ok);border-color:var(--ok);background:var(--ok-soft)}
+.s1 .sq,.c1{background:var(--s1)} .s2 .sq,.c2{background:var(--s2)} .s3 .sq,.c3{background:var(--s3)}
+
+/* section / learn */
+.crumb{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:6px}
+.crumb button{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.crumb .mono{color:var(--muted)}
+.sec-title{font-size:clamp(24px,5vw,32px);margin-bottom:6px}
+.sec-sub{color:var(--muted);margin-bottom:16px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;font-weight:500;color:var(--muted);min-height:44px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.dots{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center}
+.dot{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--paper);font-family:var(--f-mono);font-size:12px;padding:0;color:var(--muted)}
+.dot.seen{background:var(--accent-soft);color:var(--ink);border-color:var(--accent)}
+.dot.cur{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:clamp(16px,4vw,26px);display:flex;flex-direction:column;gap:16px}
+.card h2{font-size:clamp(21px,4.5vw,26px)}
+.prompt{background:var(--paper2);border:1px dashed var(--line);border-radius:8px;padding:12px 14px}
+.prompt .mono{display:block;color:var(--muted);margin-bottom:2px}
+.answer{display:flex;flex-direction:column;gap:14px}
+.answer li{padding-left:2px}
+.tip{background:var(--hi);color:var(--hi-ink);border-radius:6px;padding:10px 14px;font-size:15px}
+.tip b{font-family:var(--f-mono);font-size:12px;letter-spacing:.05em;margin-right:8px}
+.nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px}
+.finish{margin-top:18px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.finish h3{font-size:19px}
+
+/* tools */
+.tool{display:flex;flex-direction:column;gap:14px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.field input{font:inherit;font-family:var(--f-mono);color:var(--ink);background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:44px;width:100%}
+.outs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.out{background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.out span{display:block;font-size:12.5px;color:var(--muted)}
+.out b{font-family:var(--f-mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.note{font-size:14px;color:var(--muted)}
+.warn{color:var(--bad);font-size:14px}
+
+/* quiz */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:18px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.tag{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-radius:4px;padding:2px 8px;color:var(--muted);background:var(--paper)}
+.qtext{font-size:18px;font-weight:500;line-height:1.6}
+.qbox{background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:15px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:48px;width:100%}
+.opt .n{font-family:var(--f-mono);flex:none;color:var(--muted)}
+.opt .t{min-width:0;overflow-wrap:anywhere}
+.opt:hover{border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.good{border-color:var(--ok);background:var(--ok-soft)}
+.opt.bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt.locked{cursor:default}
+.fb{border-radius:10px;padding:14px 16px;border:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.fb.good{background:var(--ok-soft);border-color:var(--ok)}
+.fb.bad{background:var(--bad-soft);border-color:var(--bad)}
+.fb strong{font-family:var(--f-disp)}
+.palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.palette button{width:34px;height:34px;border-radius:6px;border:1px solid var(--line);background:var(--paper);font-family:var(--f-mono);font-size:12px;padding:0}
+.palette button.ans{background:var(--accent-soft);border-color:var(--accent)}
+.palette button.cur{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.timer{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.score{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.score b{font-family:var(--f-mono);font-size:44px;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.bysubj{display:flex;flex-direction:column;gap:8px;width:100%}
+.bysubj div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px;font-size:15px}
+.verdict{font-weight:700}
+.rv{display:flex;flex-direction:column;gap:10px}
+details.r{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:0}
+details.r summary{cursor:pointer;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;list-style:none}
+details.r summary::-webkit-details-marker{display:none}
+details.r .mk{font-family:var(--f-mono);flex:none}
+details.r.g .mk{color:var(--ok)} details.r.b .mk{color:var(--bad)}
+details.r .body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.cfg{display:flex;flex-direction:column;gap:16px}
+.chk{display:flex;gap:10px;align-items:center;min-height:44px}
+.chk input{width:20px;height:20px;accent-color:var(--accent)}
+select{font:inherit;background:var(--paper2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:44px}
+.foot{margin-top:44px;font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px}
+@media (max-width:520px){.stats{grid-template-columns:1fr 1fr 1fr}.stat b{font-size:20px}.tab{padding:10px 10px}}
+@media (prefers-reduced-motion:no-preference){.card,.sec{transition:border-color .15s}}
+</style>
+<div class="wrap" id="app"></div>
+<script>
+const ul=(...x)=>'<ul>'+x.map(i=>'<li>'+i+'</li>').join('')+'</ul>';
+const SUBJ={1:'데이터 이해',2:'데이터 분석 기획',3:'데이터 분석'};
+const SECS=[],QS=[];
+function sec(id,subj,title,blurb,cards,tool){SECS.push({id,subj,title,blurb,cards,tool:tool||null});}
+function qs(sid,list){list.forEach((x,i)=>QS.push({id:sid+'-'+(i+1),s:sid,t:x[0],q:x[1],box:x[2]||'',o:x[3],a:x[4],e:x[5]}));}
+
+/* ===================== 1과목 ===================== */
+sec('s1',1,'데이터와 지식','DIKW, 암묵지·형식지, SECI, 정성·정량 데이터',[
+{t:'DIKW 피라미드',p:'“A마트 100원, B마트 300원”은 D·I·K·W 중 무엇일까요? “A마트가 더 싸다”는요?',
+a:ul('<b>Data(데이터)</b>: 가공 전의 객관적 사실. 예) A마트 100원, B마트 300원','<b>Information(정보)</b>: 데이터를 가공해 패턴·의미를 도출. 예) A마트가 B마트보다 싸다','<b>Knowledge(지식)</b>: 정보를 구조화·연결해 예측에 쓰는 결과. 예) 상대적으로 저렴한 A마트에서 사야겠다','<b>Wisdom(지혜)</b>: 근본 원리에 대한 깊은 이해에서 나오는 창의적 아이디어. 예) 다른 상품도 A마트가 저렴할 것이다'),
+tip:'숫자 그대로면 데이터, 비교·해석하면 정보, 행동 결정이면 지식, 일반화된 판단이면 지혜.'},
+{t:'암묵지와 형식지',p:'자전거 타는 법과 작업 매뉴얼 중 공유하기 어려운 쪽은?',
+a:ul('<b>암묵지</b>: 경험·학습으로 개인에게 체화된 지식. 공유가 어렵다. 예) 자동차 운전, 장인의 노하우, 음식 솜씨','<b>형식지</b>: 문서·매뉴얼처럼 형식화된 지식. 전달·공유가 쉽다. 예) 작업 매뉴얼, 설계서, 데이터베이스, 프로그램')},
+{t:'SECI 모델',p:'암→암, 암→형, 형→형, 형→암은 각각 무슨 단계일까요?',
+a:ul('<b>공통화</b>(Socialization) 암묵지→암묵지: 노하우를 타인에게 전달','<b>표출화</b>(Externalization) 암묵지→형식지: 노하우를 문서·교육 등으로 전환','<b>연결화</b>(Combination) 형식지→형식지: 기존 형식지에 새 형식지를 추가','<b>내면화</b>(Internalization) 형식지→암묵지: 형식지를 참고해 개인이 체화'),
+tip:'순서는 공통화 → 표출화 → 연결화 → 내면화 (공·표·연·내).'},
+{t:'정성적 데이터와 정량적 데이터',p:'주관식 설문 응답과 기온 중 정성적 데이터는?',
+a:ul('<b>정성적</b>: 비정형 데이터. 저장·분석에 시간과 비용이 많이 든다. 예) 주관식 응답, 기상특보, SNS 텍스트','<b>정량적</b>: 수치 기반 정형 데이터. 대량 저장·분석이 쉽다. 예) 온도, 습도, 강수량, 풍속')},
+{t:'데이터베이스의 정의와 특징',p:'데이터베이스 정의의 4요소와 4대 특징은?',
+a:ul('<b>정의 4요소</b>: 통합(중복 최소화) · 저장(접근 가능한 매체) · 공용(여러 사용자 공동 이용) · 운영(조직 고유 업무에 필요)','<b>4대 특징</b>: 실시간 접근성 · 계속적인 변화(갱신·삽입·삭제) · 동시 공유 · 내용에 의한 참조(값으로 참조)')}
+]);
+qs('s1',[
+['neg','다음 중 SECI 모델에 대한 설명으로 가장 적절하지 않은 것은?','',['공통화는 암묵지를 다른 사람의 암묵지로 전달하는 단계이다.','표출화는 암묵지를 문서나 매뉴얼 같은 형식지로 전환하는 단계이다.','연결화는 형식지를 개인이 체화하여 암묵지로 바꾸는 단계이다.','내면화는 형식지를 참고하여 개인이 노하우를 체화하는 단계이다.'],2,'연결화(Combination)는 형식지에 새로운 형식지를 더하는 형식지→형식지 단계입니다. 형식지를 암묵지로 바꾸는 것은 내면화입니다.'],
+['pos','다음 중 DIKW 피라미드에서 나머지와 다른 단계에 해당하는 것은?','',['이번 달 A상점의 아메리카노 판매량은 1,200잔이다.','8월 B상점의 아메리카노 판매량은 900잔이다.','A상점의 판매량이 지난달보다 줄었다.','지난달 A상점의 아메리카노 판매량은 1,500잔이었다.'],2,'①②④는 가공 전의 사실이므로 데이터이고, ③은 두 데이터를 비교해 의미를 낸 정보입니다.'],
+['pos','다음 설명에 해당하는 데이터베이스의 특징은?','사용자가 질의하면 저장된 데이터를 즉시 처리해 결과를 돌려준다.',['실시간 접근성','계속적인 변화','동시 공유','내용에 의한 참조'],0,'질의에 즉시 응답하는 성질이 실시간 접근성입니다. 계속적인 변화는 갱신·삽입·삭제로 최신 상태를 유지하는 것, 내용에 의한 참조는 위치가 아닌 값으로 찾는 것입니다.'],
+['combo','정성적 데이터와 정량적 데이터에 대한 설명으로 적절한 것을 모두 고르시오.','가. 정성적 데이터는 주로 비정형이며 저장·분석에 많은 시간과 비용이 든다.<br>나. 기온·습도·강수량은 정량적 데이터이다.<br>다. 정량적 데이터는 수치 기반이어서 저장·분석이 상대적으로 어렵다.',['가','가, 나','나, 다','가, 나, 다'],1,'다가 틀립니다. 정량적 데이터는 수치 기반이라 대량 저장·분석이 쉽습니다.'],
+['neg','다음 중 데이터베이스의 정의를 구성하는 요소로 보기 어려운 것은?','',['통합된 데이터','저장된 데이터','공용 데이터','암호화된 데이터'],3,'데이터베이스 정의의 4요소는 통합, 저장, 공용, 운영 데이터입니다.']
+]);
+
+sec('s2',1,'데이터 유형과 DBMS','정형·반정형·비정형, 메타데이터·인덱스, DBMS, RDBMS·NoSQL',[
+{t:'데이터 유형 3가지',p:'HTML·JSON·XML은 정형일까요, 반정형일까요? 사진과 SNS 글은요?',
+a:ul('<b>정형</b>: 행·열로 구성된 스프레드시트 형태. 관계형 DB, 엑셀, CSV, ERP 매출 테이블','<b>반정형</b>: 데이터 구조 정보(메타)를 함께 가지며 파싱해서 활용. HTML, XML, JSON, 웹로그, 센서 데이터','<b>비정형</b>: 형태와 구조가 없음. 사진·이미지, 영상, 소리, SNS 텍스트'),
+tip:'HTML·XML·JSON은 반정형입니다. HTML을 정형으로 묻는 함정이 자주 나옵니다.'},
+{t:'메타데이터와 인덱스',p:'“데이터에 대한 데이터”는? 검색을 빠르게 하는 자료 구조는?',
+a:ul('<b>메타데이터</b>: 데이터에 대한 데이터. 특성, 구조, 의미, 관리 정보를 설명','<b>인덱스</b>: 데이터 검색과 정렬을 빠르게 수행하기 위한 자료 구조')},
+{t:'DBMS의 장점과 단점',p:'DBMS를 쓰면 좋은 점과 나쁜 점을 각각 떠올려 보세요.',
+a:ul('<b>장점</b>: 데이터 중복 최소화, 일관성·무결성 유지, 접근 권한 제어로 민감 정보 보호, SQL 기반 언어로 쉽게 제어','<b>단점</b>: 운영·보수 비용 발생, 전문 지식과 관리 필요, 시스템에 문제가 생기면 모든 데이터에 영향'),
+tip:'무결성(정확성·일관성)은 DBMS의 대표적 장점으로 출제됩니다.'},
+{t:'RDBMS, ODBMS, NoSQL',p:'MongoDB와 Redis는 RDBMS일까요?',
+a:ul('<b>RDBMS</b>: 정형화된 테이블로 구성된 데이터 항목의 집합. MySQL, Oracle, SQL Server, DB2, PostgreSQL, Sybase','<b>ODBMS</b>: 객체지향 데이터베이스. 복잡한 데이터 구조를 객체로 표현','<b>NoSQL</b>: 관계형보다 덜 제한적인 일관성 모델. 디자인 단순화, 수평적 확장성, 세밀한 통제. MongoDB, HBase, Redis, Cassandra')}
+]);
+qs('s2',[
+['neg','다음 중 데이터 유형 분류가 올바르지 않은 것은?','',['엑셀 매출 표 – 정형','JSON 데이터 – 반정형','SNS 게시글 – 비정형','HTML 문서 – 정형'],3,'HTML은 태그라는 구조 정보를 가진 반정형 데이터입니다.'],
+['pos','데이터의 특성, 구조, 의미, 관리 정보를 설명하는 “데이터에 대한 데이터”는?','',['인덱스','메타데이터','트랜잭션','파싱'],1,'메타데이터의 정의입니다. 인덱스는 검색·정렬을 빠르게 하기 위한 자료 구조입니다.'],
+['neg','다음 중 DBMS의 장단점에 대한 설명으로 적절하지 않은 것은?','',['데이터 중복을 최소화해 일관성과 무결성을 유지하는 데 유리하다.','접근 권한을 제어하여 민감한 정보를 보호할 수 있다.','시스템에 문제가 발생하면 모든 데이터에 영향을 줄 수 있다.','도입과 운영에 별도의 비용이 들지 않는다.'],3,'DBMS는 운영·보수 비용이 발생하고 전문 지식도 필요합니다.'],
+['neg','다음 중 NoSQL에 대한 설명으로 적절하지 않은 것은?','',['관계형 DB보다 덜 제한적인 일관성 모델을 사용한다.','수평적 확장성이 좋다.','디자인을 단순화할 수 있다.','엄격한 테이블 스키마와 조인 연산 중심으로 설계된다.'],3,'엄격한 스키마와 조인 중심은 RDBMS의 특징입니다.'],
+['neg','다음 중 관계형 데이터베이스 관리 시스템(RDBMS) 제품이 아닌 것은?','',['MySQL','Oracle','PostgreSQL','MongoDB'],3,'MongoDB는 대표적인 NoSQL 제품입니다.']
+]);
+
+sec('s3',1,'기업 솔루션과 데이터 웨어하우스','OLTP·OLAP, SCM·CRM·ERP, BI·BA·KMS·EDW, 데이터 마트',[
+{t:'OLTP와 OLAP',p:'은행 거래처럼 짧고 빈번한 트랜잭션을 처리하는 시스템은?',
+a:ul('<b>OLTP</b>(On-Line Transaction Processing): 온라인 거래(갱신) 처리. 컴퓨터와 연결된 사용자들의 실시간 트랜잭션 처리','<b>OLAP</b>(On-Line Analytical Processing): 온라인 분석 처리. 다차원 데이터를 대화식으로 분석하고 통계 요약 정보 제공')},
+{t:'SCM, CRM, ERP',p:'공급망, 고객관계, 전사적 자원관리는 각각 어느 약자일까요?',
+a:ul('<b>SCM</b>(공급망 관리): 조달→생산→물류→소비자까지 공급망 전체를 최적화. 재고·비용 절감, 납기 단축','<b>CRM</b>(고객관계 관리): 구매 상담 등 고객 이해를 바탕으로 마케팅 전략 수립. 높은 이익 창출','<b>ERP</b>(전사적 자원관리): 프로세스를 통합. 회계·인사·생산 등 기업 내부 자원 통합')},
+{t:'BI, BA, KMS, EDW',p:'BI와 BA 중 더 통계·수학적 분석에 초점을 둔 것은?',
+a:ul('<b>RTE</b>: 비즈니스 프로세스를 투명하게 유지, 지연시간 제거','<b>BI</b>: 데이터 웨어하우스 내 데이터에 접근해 경영 의사결정을 지원. Ad hoc Report 포함','<b>BA</b>: 통계적·수학적 분석에 초점. BI보다 진보된 형태','<b>KMS</b>: 지식관리시스템. 조직 내 지식을 체계적으로 관리','<b>EDW</b>: 여러 애플리케이션 정보를 중앙에 집중시킨 전사 데이터 웨어하우스')},
+{t:'데이터 웨어하우스와 데이터 마트',p:'데이터 웨어하우스의 4대 특징은?',
+a:ul('<b>4대 특징</b>: 통합성 · 시계열성 · 주제 지향성 · 비휘발성(비소멸성)','<b>데이터 마트</b>: 소규모 단일 주제의 DW. 특정 부서·업무·주제 중심','<b>종속형</b>: 중앙 DW가 존재, 하향식(Top-down), 일관성·정합성 높음','<b>독립형</b>: 중앙 DW 없음, 빠른 구축·낮은 관리 비용, 중복·불일치 우려')}
+]);
+qs('s3',[
+['pos','다음 설명에 해당하는 시스템은?','다차원 데이터를 대화식으로 분석하고, 통계적 요약 정보를 사용자에게 제공한다.',['OLTP','OLAP','SCM','ERP'],1,'OLAP입니다. OLTP는 실시간 거래(갱신) 처리 시스템입니다.'],
+['neg','다음 중 데이터 웨어하우스의 4대 특징에 해당하지 않는 것은?','',['통합성','시계열성','주제 지향성','휘발성'],3,'데이터 웨어하우스의 특징은 비휘발성(비소멸성)입니다.'],
+['pos','다음 중 CRM의 목적으로 가장 적절한 것은?','',['공급망 전체의 재고와 납기를 최적화한다.','고객을 이해하고 마케팅 전략을 수립해 높은 이익을 창출한다.','회계·인사·생산 등 내부 자원을 하나의 시스템으로 통합한다.','조직 내 지식을 체계적으로 관리한다.'],1,'①은 SCM, ③은 ERP, ④는 KMS의 설명입니다.'],
+['combo','데이터 마트에 대한 설명으로 올바른 것을 모두 고르시오.','가. 종속형 마트는 중앙 데이터 웨어하우스가 존재하며 하향식으로 구축된다.<br>나. 독립형 마트는 빠르게 구축할 수 있으나 데이터 중복·불일치 우려가 있다.<br>다. 데이터 마트는 전사 단위의 단일 통합 저장소이다.',['가','가, 나','나, 다','가, 나, 다'],1,'다가 틀립니다. 데이터 마트는 특정 부서·주제 중심의 소규모 DW입니다.'],
+['neg','BI와 BA에 대한 설명으로 적절하지 않은 것은?','',['BI는 데이터 웨어하우스 내 데이터를 활용해 경영 의사결정에 필요한 정보를 얻는다.','BA는 통계적·수학적 분석에 초점을 둔다.','Ad hoc Report는 특정 요구에 의해 즉석에서 생성되는 보고서이다.','BA는 BI보다 단순한 형태의 분석이다.'],3,'BA는 BI보다 진보된 형태의 분석입니다.']
+]);
+
+sec('s4',1,'빅데이터 기초','3V·4V, 패러다임 변화, 데이터 단위, 비유, 3요소',[
+{t:'빅데이터의 3V·4V',p:'3V를 말해 보고, 4번째 V는 무엇일까요?',
+a:ul('<b>Volume</b>(양): 데이터 규모 증가','<b>Variety</b>(다양성): 정형·반정형·비정형 모두 포함','<b>Velocity</b>(속도): 빠른 생성·처리','<b>Value</b>(가치): 4V의 네 번째. 비즈니스 효과(ROI) 관점'),
+tip:'Availability, Validity 같은 보기는 빅데이터의 V가 아닙니다.'},
+{t:'빅데이터 패러다임 4대 변화',p:'사전→? 표본→? 질→? 인과→?',
+a:ul('사전 처리 → <b>사후 처리</b>','표본조사 → <b>전수조사</b>','질 → <b>양</b>','인과관계 → <b>상관관계</b>'),
+tip:'“양 → 질”로 뒤집어 묻는 문제가 자주 나옵니다. 정답은 질 → 양입니다.'},
+{t:'데이터 단위',p:'KB부터 YB까지 순서를 말해 보세요. 1ZB는 몇 EB?',
+a:ul('KB → MB → GB → TB → PB → EB → ZB → YB','각 단계는 1,024배(2<sup>10</sup>)','1 ZB = 1,024 EB','1 Byte = 숫자·영어·공백·특수문자(반각문자), 2 Byte = 한글·한자(전각문자)')},
+{t:'빅데이터 비유와 활용 3요소',p:'석탄·철, 원유, 렌즈, 플랫폼은 각각 무엇에 빗댄 것일까요?',
+a:ul('<b>석탄·철</b>: 1·2차 산업혁명의 핵심 재료','<b>원유</b>: 주요 에너지원','<b>렌즈</b>: 현미경처럼 생물학 기술 발전에 중요한 도구','<b>플랫폼</b>: 공동 활용 목적의 유·무형 구조물','<b>활용 3요소</b>: 데이터(모든 것의 데이터화) · 기술(분석·처리 기술, AI) · 인력(데이터 사이언티스트, 알고리즈미스트)')}
+]);
+qs('s4',[
+['neg','다음 중 빅데이터의 특징(V)으로 가장 적절하지 않은 것은?','',['Volume: 기존 DB의 한계를 넘는 초대규모 데이터 양','Velocity: 실시간으로 생성되고 빠르게 처리해야 하는 속도','Variety: 정형, 반정형, 비정형을 아우르는 다양한 형태','Availability: 필요할 때 데이터에 접근할 수 있는 정도'],3,'3V는 Volume, Variety, Velocity이고 여기에 Value를 더하면 4V입니다. Availability는 해당하지 않습니다.'],
+['neg','빅데이터 시대의 패러다임 변화로 올바르지 않은 것은?','',['사전 처리 → 사후 처리','표본조사 → 전수조사','양 → 질','인과관계 → 상관관계'],2,'질 → 양으로 변했습니다. 데이터가 충분히 많으면 오류에 덜 민감해집니다.'],
+['pos','1ZB(제타바이트)와 같은 것은?','',['1,024 EB','1,024 PB','1,024 YB','1,000 EB'],0,'단위는 KB → MB → GB → TB → PB → EB → ZB → YB 순이며 각 1,024배입니다.'],
+['pos','빅데이터에 대한 비유와 그 의미가 올바르게 짝지어진 것은?','',['석탄·철 – 1·2차 산업혁명의 핵심 재료','원유 – 현미경과 같은 중요성','렌즈 – 주요 에너지원','플랫폼 – 단일 기업 전용 폐쇄형 시스템'],0,'원유는 주요 에너지원, 렌즈는 현미경처럼 새로운 발견을 가능하게 하는 도구, 플랫폼은 공동 활용 구조물입니다.'],
+['neg','다음 중 빅데이터 활용에 필요한 3요소로 보기 어려운 것은?','',['데이터','기술','인력','제도 및 법령'],3,'빅데이터 활용 3요소는 데이터, 기술, 인력입니다.']
+]);
+
+sec('s5',1,'빅데이터 활용·위기·기술','활용 기법, 위기 요인과 통제, 비식별화, HDFS·MapReduce',[
+{t:'빅데이터 활용 기법',p:'기저귀-맥주 사례는 어떤 분석일까요? 영향력 있는 사람을 찾는 분석은?',
+a:ul('<b>연관 분석</b>: 데이터 간 상관관계(연관 규칙) 발견. 기저귀와 맥주','<b>유형 분석</b>: 사용자 특성에 맞춰 그룹·범주로 분류','<b>유전 알고리즘</b>: 최적화. 선택·교차·변이로 세대를 거쳐 진화','<b>기계 학습</b>: 훈련 데이터로 패턴을 학습해 예측. 넷플릭스 추천','<b>회귀 분석</b>: 변수 간 수치 관계 설명·예측. 광고비와 다음 분기 매출','<b>감정 분석</b>: 긍정·부정 분류. 고객 리뷰','<b>소셜 네트워크 분석</b>: 사람 간 관계·영향력 파악. 입소문 마케팅')},
+{t:'빅데이터 위기 요인과 통제',p:'사생활 침해, 책임 원칙 훼손, 데이터 오용은 각각 어떻게 통제할까요?',
+a:ul('<b>사생활 침해</b> → 동의제에서 <b>책임제</b>로 전환 (개인정보 사용자에게 책임)','<b>책임 원칙 훼손</b> → <b>결과 기반 책임 원칙</b> 고수 (예측만으로 불이익을 주지 않음)','<b>데이터 오용</b> → 알고리즘 접근권 허용, 객관적 인증 방안 도입, <b>알고리즈미스트</b> 활용'),
+tip:'세 쌍을 서로 섞어 놓고 “잘못 연결된 것”을 고르는 문제가 자주 나옵니다.'},
+{t:'개인정보 비식별화',p:'27세를 20대로 바꾸는 것은 어떤 기법?',
+a:ul('<b>가명처리</b>: 식별 값을 다른 값으로 대체','<b>총계처리</b>: 합계·평균 같은 통계값으로 대표','<b>데이터 삭제</b>: 식별 요소를 부분 또는 전체 삭제','<b>범주화</b>: 구간 값으로 변환 (27세 → 20대)','<b>마스킹</b>: 일부를 가림 (980402-2******)')},
+{t:'빅데이터 핵심 기술',p:'HDFS의 복제 개수 기본값은? MapReduce의 처리 단계는?',
+a:ul('<b>HDFS</b>: 분산 파일 시스템. 네임노드(Master) + 데이터노드(Slave). 블록 단위, 기본 복제 3개. 네임노드 손상 시 정상 작동 불가(SPOF)','<b>MapReduce</b>: 분산 병렬 처리 모델. Input → Splitting → Mapping → Shuffling → Reducing','<b>Hadoop</b>: HDFS(저장) + MapReduce(처리)','<b>Spark</b>: 인메모리 기반 고속 처리 엔진','<b>GFS</b>: 구글 분산 파일 시스템 / <b>JDBC</b>: 자바 기반 DB 연결 API')}
+]);
+qs('s5',[
+['neg','다음 중 빅데이터 분석 기법과 활용 예시의 연결이 적절하지 않은 것은?','',['유전 알고리즘: 설계를 반복해 세대를 거치며 최적의 결과를 얻는다.','감정 분석: 고객 리뷰를 긍정과 부정으로 분류한다.','회귀 분석: 구매 고객을 몇 개의 유형 집단으로 나눈다.','소셜 네트워크 분석: SNS 사용자 간 관계를 시각화한다.'],2,'고객을 집단으로 나누는 것은 유형 분석(군집)입니다. 회귀 분석은 변수 간 수치 관계를 설명·예측합니다.'],
+['combo','빅데이터 위기 요인과 통제 방안이 올바르게 연결된 것을 모두 고르시오.','가. 사생활 침해 – 동의제에서 책임제로 전환<br>나. 책임 원칙 훼손 – 알고리즘 접근권 허용 및 객관적 인증 방안 도입<br>다. 데이터 오용 – 알고리즈미스트 도입',['가','가, 나','가, 다','가, 나, 다'],2,'나가 잘못 연결되었습니다. 책임 원칙 훼손에는 결과 기반 책임 원칙을 고수하는 것으로 대응합니다.'],
+['neg','개인정보 비식별화 기법에 대한 설명으로 옳지 않은 것은?','',['가명처리: 식별 가능한 값을 다른 값으로 대체한다.','총계처리: 합계나 평균 같은 통계값으로 대표한다.','범주화: 27세를 20대로 바꾸는 방식이다.','마스킹: 데이터 값을 모두 원본 그대로 공개한다.'],3,'마스킹은 일부를 가리거나 대체하는 기법입니다.'],
+['neg','HDFS에 대한 설명으로 옳지 않은 것은?','',['네임노드와 데이터노드로 구성된다.','파일을 블록 단위로 나누어 저장하고 기본 3개로 복제한다.','범용 장비로 구성할 수 있어 비용 효율적이다.','네임노드는 SPOF가 아니어서 손상되어도 시스템이 정상 작동한다.'],3,'네임노드가 손상되면 정상 작동이 불가능한 단일 장애점(SPOF)입니다.'],
+['pos','MapReduce의 처리 단계 순서로 올바른 것은?','',['Input → Splitting → Mapping → Shuffling → Reducing','Input → Mapping → Splitting → Reducing → Shuffling','Input → Splitting → Shuffling → Mapping → Reducing','Input → Reducing → Mapping → Splitting → Shuffling'],0,'데이터를 나누고(Splitting) 매핑한 뒤(Mapping) 같은 키끼리 모아(Shuffling) 집계(Reducing)합니다.']
+]);
+
+sec('s6',1,'데이터 사이언스','데이터 사이언티스트 역량, 가치 패러다임, 전략적 통찰',[
+{t:'데이터 사이언티스트의 역량',p:'하드 스킬과 소프트 스킬은 각각 무엇일까요?',
+a:ul('<b>하드 스킬</b>: 머신러닝, 모델링, 데이터 기술 스킬 (이론적 지식)','<b>소프트 스킬</b>: 통찰력 있는 분석(호기심·창의적 사고·논리적 비판), 다분야 간 협력(협업·커뮤니케이션), 설득력 있는 전달(스토리텔링·시각화)'),
+tip:'소프트 스킬에는 기법 활용 능력이 아니라 협업·소통·전달이 들어갑니다.'},
+{t:'데이터 사이언스와 분석가',p:'데이터 사이언스의 핵심 목적은 DB 구축일까요?',
+a:ul('정형·반정형·비정형 데이터에서 의미와 가치를 추출하는 <b>총체적(holistic) 접근</b>','수학, 통계학, 컴퓨터공학, 데이터 공학 등을 활용','<b>데이터 분석가</b>: 분석 보고서·시각화 작성, 데이터 기반 의사결정 추구','<b>데이터 사이언티스트</b>: 머신러닝·AI 코딩과 통계 지식이 필요')},
+{t:'전략적 통찰과 가치 패러다임',p:'가치 패러다임의 변화 순서는?',
+a:ul('<b>가치 패러다임</b>: Digitalization(아날로그→디지털) → Connection(디지털 정보 간 연결) → Agency(효율적·효과적 연결 지향)','<b>효과적 분석 모델 요건</b>: 예측할 수 없는 위험 요소를 지속적으로 판단, 모델 능력에 의구심을 가지고 한계를 고찰, 외부 요인도 고려','사회경제 변화: 단순 세계 → 복잡 세계 / 제품 생산 → 서비스 중심 / 생산 → 시장 창조')}
+]);
+qs('s6',[
+['neg','데이터 사이언티스트에 대한 설명으로 적절하지 않은 것은?','',['데이터를 수집·분석해 숨겨진 패턴을 발견하고 모델을 만든다.','개인의 분석 능력만 중요하며 타인과의 의사소통은 중요하지 않다.','통계, 프로그래밍, 머신러닝과 특정 산업의 도메인 지식을 종합 활용한다.','문제 정의부터 모델 개발·배포까지 다른 직군과 협업한다.'],1,'협업과 커뮤니케이션은 소프트 스킬의 핵심입니다.'],
+['neg','다음 중 데이터 사이언티스트의 소프트 스킬에 해당하지 않는 것은?','',['통찰력 있는 분석','다분야 간 협력','설득력 있는 전달','머신러닝 기법 활용'],3,'머신러닝·모델링은 하드 스킬입니다.'],
+['pos','가치 패러다임의 변화 순서로 올바른 것은?','',['Connection → Digitalization → Agency','Digitalization → Connection → Agency','Agency → Connection → Digitalization','Digitalization → Agency → Connection'],1,'디지털화 → 연결 → 에이전시 순입니다.'],
+['pos','전략적 통찰을 얻기 위한 분석 모델에 대한 설명으로 옳은 것은?','',['외부 환경은 통제할 수 없으므로 고려하지 않는다.','모델이 예측하지 못하는 위험 요소를 지속적으로 판단한다.','모델의 능력은 한계 없이 신뢰해도 된다.','모델의 한계는 분석 후반에만 점검한다.'],1,'모델 능력에 의구심을 가지고 한계를 끊임없이 고찰해야 하며 외부 요인도 고려합니다.'],
+['neg','데이터 사이언스에 대한 설명으로 적절하지 않은 것은?','',['다양한 형태의 데이터에서 의미와 가치를 추출한다.','총체적(holistic) 접근법을 사용한다.','수학, 통계학, 컴퓨터공학 등을 활용한다.','주된 목적은 데이터베이스 구축 그 자체이다.'],3,'핵심은 데이터에서 인사이트를 도출해 의사결정을 돕는 것입니다.']
+]);
+
+/* ===================== 2과목 ===================== */
+sec('s7',2,'분석 기획과 주제 유형','분석 기획, 4가지 주제 유형, 단기·중장기, 과제 특징',[
+{t:'분석 주제 유형 4가지',p:'분석 대상과 방법의 Known/Unknown 조합 4가지 이름은?',
+a:ul('방법 Known + 대상 Known → <b>최적화</b>(Optimization)','방법 Known + 대상 Unknown → <b>통찰</b>(Insight)','방법 Unknown + 대상 Known → <b>솔루션</b>(Solution)','방법 Unknown + 대상 Unknown → <b>발견</b>(Discovery)'),
+tip:'“방법은 알지만 대상을 모른다”가 통찰입니다. 대상을 아는데 방법을 모르면 솔루션입니다.'},
+{t:'목표 시점별 분석 기획',p:'Quick-Win은 단기와 중장기 중 어디에 해당할까요?',
+a:ul('<b>당면한 과제(단기)</b>: Speed & Test, 과제 중심, Quick-Win, 문제 해결(Problem Solving)','<b>마스터 플랜(중장기)</b>: Accuracy & Deploy, 지속적 과제, Long Term View, 문제 정의(Problem Definition)')},
+{t:'분석 기획 시 고려사항',p:'분석 기획 시 꼭 확인해야 할 세 가지는?',
+a:ul('<b>가용 데이터</b>: 데이터 유형(정형·반정형·비정형)을 사전에 파악','<b>적절한 유스케이스 탐색</b>: 유사 시나리오와 솔루션을 최대한 활용','<b>장애요소 사전 계획</b>: 장애요소에 대한 계획과 지속적인 교육·활용 방안')},
+{t:'분석 과제의 주요 특징 5가지',p:'분석 과제 정의에서 고려하는 특징 5가지는?',
+a:ul('데이터 크기(Data Size)','데이터 복잡도(Data Complexity)','속도(Speed)','분석 복잡도(Analytic Complexity)','정확도와 정밀도(Accuracy & Precision)')}
+]);
+qs('s7',[
+['pos','분석 방법은 알고 있으나 분석 대상이 무엇인지 모르는 경우의 분석 주제 유형은?','',['최적화','통찰','솔루션','발견'],1,'방법 Known + 대상 Unknown은 통찰(Insight)입니다.'],
+['pos','분석 대상과 분석 방법을 모두 모르는 상태에서 데이터로부터 새로운 대상을 도출하는 유형은?','',['최적화','통찰','솔루션','발견'],3,'둘 다 Unknown이면 발견(Discovery)입니다.'],
+['neg','분석 기획 시 고려사항으로 적절하지 않은 것은?','',['가용 데이터의 유형을 사전에 파악한다.','유사한 시나리오와 솔루션 유스케이스를 탐색한다.','분석 수행 시 장애요소에 대한 계획을 사전에 수립한다.','정확도와 무관하게 최신 기법 사용을 최우선으로 한다.'],3,'최신 기법 사용 자체가 목적이 아니라 문제 적합성과 데이터 확보, 가치를 고려해야 합니다.'],
+['pos','당면한 과제(단기)와 마스터 플랜(중장기)의 특징이 올바르게 짝지어진 것은?','',['단기 – Accuracy & Deploy','단기 – Quick-Win, 문제 해결','중장기 – Speed & Test','중장기 – Quick-Win'],1,'단기는 Speed & Test, Quick-Win, 문제 해결. 중장기는 Accuracy & Deploy, Long Term View, 문제 정의입니다.'],
+['neg','다음 중 분석 과제의 주요 특징 5가지에 해당하지 않는 것은?','',['데이터 크기','분석 복잡도','속도','분석 비용'],3,'5가지는 데이터 크기, 데이터 복잡도, 속도, 분석 복잡도, 정확도·정밀도입니다.']
+]);
+
+sec('s8',2,'분석 방법론','폭포수·나선형·프로토타입, KDD, CRISP-DM, 빅데이터 분석 방법론',[
+{t:'모델 개발 방법론 3가지',p:'위험 분석을 포함해 반복하는 모델은? 시제품을 먼저 만드는 모델은?',
+a:ul('<b>폭포수 모형</b>: 하향식. 이전 단계가 끝나야 다음 단계로 진행, 단계마다 피드백','<b>나선형 모형</b>: 점진적 반복. 계획 → 위험 분석 → 개발·검증 → 고객 평가','<b>프로토타입 모형</b>: 고객 니즈가 불명확할 때 시제품을 먼저 만들고 피드백으로 반복 개선')},
+{t:'KDD 5단계',p:'KDD 단계 순서는?',
+a:ul('데이터셋 선택(Selection) → 데이터 전처리 → <b>데이터 변환</b>(변수 선택, 차원 축소) → 데이터 마이닝 → 해석·평가'),
+tip:'변수 선택과 차원 축소는 “변환” 단계입니다. 잡음·이상값 제거는 “전처리”입니다.'},
+{t:'CRISP-DM 6단계',p:'CRISP-DM 6단계 순서는?',
+a:ul('업무 이해 → 데이터 이해 → 데이터 준비 → 모델링 → 평가 → 전개','각 단계는 고정된 순서가 아니라 반복·피드백이 가능')},
+{t:'빅데이터 분석 방법론 5단계',p:'각 단계에서 하는 일을 떠올려 보세요.',
+a:ul('<b>분석 기획</b>: 비즈니스 이해·범위 설정, 프로젝트 정의(SOW, WBS), 위험 계획(회피·전이·완화·수용)','<b>데이터 준비</b>: 필요 데이터 정의, 스토어 설계, 수집·정합성 점검, 웹 크롤링·API·ETL','<b>데이터 분석</b>: 텍스트 분석, EDA, 모델링 및 평가 (필요 시 데이터 준비 단계로 피드백)','<b>시스템 구현</b>: 설계·구현, 테스트, 운영','<b>평가 및 전개</b>: 모델 발전 계획, 프로젝트 평가·보고')}
+]);
+qs('s8',[
+['pos','CRISP-DM 분석 방법론의 단계 순서로 올바른 것은?','',['업무 이해 → 데이터 이해 → 데이터 준비 → 모델링 → 평가 → 전개','데이터 이해 → 업무 이해 → 모델링 → 데이터 준비 → 평가 → 전개','업무 이해 → 데이터 준비 → 데이터 이해 → 평가 → 모델링 → 전개','업무 이해 → 데이터 이해 → 모델링 → 데이터 준비 → 전개 → 평가'],0,'업무 이해 → 데이터 이해 → 데이터 준비 → 모델링 → 평가 → 전개입니다.'],
+['pos','KDD 분석 방법론에서 분석 목적에 맞는 변수 선택과 차원 축소가 이루어지는 단계는?','',['데이터셋 선택','데이터 전처리','데이터 변환','데이터 마이닝'],2,'데이터 변환 단계에서 변수 선택, 차원 축소, 파생 변수 생성이 이루어집니다.'],
+['neg','분석 모델 개발 방법론에 대한 설명으로 옳지 않은 것은?','',['폭포수 모형은 이전 단계를 완료한 후 다음 단계로 진행한다.','나선형 모형은 점진적으로 반복하며 위험 분석을 포함한다.','프로토타입 모형은 시제품을 먼저 만들어 사용자 피드백으로 개선한다.','나선형 모형에는 위험 분석 단계가 없다.'],3,'나선형 모형은 계획 → 위험 분석 → 개발·검증 → 고객 평가를 반복합니다.'],
+['pos','빅데이터 분석 방법론 5단계의 순서로 올바른 것은?','',['분석 기획 → 데이터 준비 → 데이터 분석 → 시스템 구현 → 평가 및 전개','분석 기획 → 데이터 분석 → 데이터 준비 → 시스템 구현 → 평가 및 전개','데이터 준비 → 분석 기획 → 데이터 분석 → 평가 및 전개 → 시스템 구현','분석 기획 → 데이터 준비 → 시스템 구현 → 데이터 분석 → 평가 및 전개'],0,'기획 → 준비 → 분석 → 구현 → 평가·전개입니다.'],
+['pos','SOW·WBS 작성과 위험 대응 계획(회피·전이·완화·수용)을 수립하는 단계는?','',['분석 기획','데이터 준비','데이터 분석','시스템 구현'],0,'프로젝트 정의와 위험 계획 수립은 분석 기획 단계의 업무입니다.']
+]);
+
+sec('s9',2,'분석 과제 도출','하향식·상향식 접근, 디자인 사고, 우선순위, 마스터플랜',[
+{t:'하향식 접근법',p:'하향식 과제 도출 4단계는?',
+a:ul('문제가 확실한 경우 체계적으로 단계화 (연역적). 분석 대상이 명확할 때 최적화·솔루션 유형에 적합','<b>① 문제 탐색</b>: 비즈니스 모델 캔버스(업무·제품·고객·지원 인프라·규제/감사), 외부 사례 벤치마킹','<b>② 문제 정의</b>: 비즈니스 문제를 데이터 문제로 변환','<b>③ 해결방안 탐색</b>: 분석 역량 확보 여부에 따라 기존 시스템 개선 / 신규 도입','<b>④ 타당성 검토</b>: 경제적·데이터·기술적 타당성')},
+{t:'상향식 접근법과 디자인 사고',p:'문제 정의 자체가 어려울 때 쓰는 접근은?',
+a:ul('<b>상향식</b>: 데이터에서 출발해 패턴·이상 징후 발견 (귀납적). 비지도 학습, 프로토타이핑 접근, 반복 개선. 발견·통찰 유형에 적합','<b>디자인 사고</b>: 상향식의 발산 단계와 하향식의 수렴 단계를 통합. 공감 → 문제 정의 → 아이디어 도출 → 프로토타입 → 테스트')},
+{t:'우선순위 평가와 사분면',p:'시급성 우선, 난이도 우선일 때 순서는?',
+a:ul('<b>시급성</b>: 전략적 중요도(비즈니스 효과·목표 가치)가 기준','<b>난이도</b>: 데이터 획득·저장·가공 비용, 분석 적용 비용, 분석 수준 (투자비용 요소 = 3V)','사분면: 1(어려움·현재) · 2(어려움·미래) · 3(쉬움·현재) · 4(쉬움·미래)','<b>시급성 우선: 3 → 4 → 2</b> / <b>난이도 우선: 3 → 1 → 2</b>','3사분면(시급·쉬움)이 최우선. 1사분면은 경영진 의사결정에 따라 조정 가능')},
+{t:'마스터플랜, 로드맵, ISP',p:'분석 마스터플랜 수립 순서와 ISP의 의미는?',
+a:ul('데이터 기반으로 과제를 도출한 뒤 <b>우선순위 결정</b> → 분석 구현 로드맵 수립 (적용 범위·방식 고려)','<b>로드맵</b>: 과제 목표 달성을 위한 방향과 일정을 시각화한 문서','<b>ISP</b>(정보 전략 계획): 전사적 종합 추진 계획, 중장기 마스터 플랜 수립')}
+]);
+qs('s9',[
+['pos','하향식 과제 도출 단계의 순서로 올바른 것은?','',['문제 탐색 → 문제 정의 → 해결방안 탐색 → 타당성 검토','문제 정의 → 문제 탐색 → 타당성 검토 → 해결방안 탐색','문제 탐색 → 해결방안 탐색 → 문제 정의 → 타당성 검토','타당성 검토 → 문제 탐색 → 문제 정의 → 해결방안 탐색'],0,'탐색 → 정의 → 해결방안 탐색 → 타당성 검토 순입니다.'],
+['neg','상향식 접근법에 대한 설명으로 옳지 않은 것은?','',['비지도 학습 방식으로 수행한다.','프로토타이핑 접근을 반복해 개선한다.','문제 정의가 어려울 때 데이터를 먼저 탐색한다.','문제가 명확히 정의된 상태에서 원인을 연역적으로 규명한다.'],3,'문제가 명확한 상태에서 연역적으로 접근하는 것은 하향식입니다.'],
+['neg','분석 과제의 “난이도”를 판단하는 요소와 가장 거리가 먼 것은?','',['데이터 획득·저장·가공 비용','분석 적용 비용','분석 수준','전략적 중요도'],3,'전략적 중요도는 시급성 기준입니다.'],
+['pos','우선순위 매트릭스에서 시급성 기준으로 과제를 추진할 때의 순서는?','(1사분면: 어려움·현재, 2사분면: 어려움·미래, 3사분면: 쉬움·현재, 4사분면: 쉬움·미래)',['3 → 4 → 2','1 → 2 → 3','4 → 3 → 2','2 → 1 → 4'],0,'시급성 우선 시 3 → 4 → 2, 난이도 우선 시 3 → 1 → 2입니다.'],
+['pos','디자인 사고(Design Thinking)에 대한 설명으로 옳은 것은?','',['상향식의 발산 단계와 하향식의 수렴 단계를 통합한 접근이다.','오직 하향식 접근만 사용한다.','비지도 학습만으로 구성된다.','폭포수 모형의 다른 이름이다.'],0,'공감 → 문제 정의 → 아이디어 도출 → 프로토타입 → 테스트의 발산·수렴 과정입니다.']
+]);
+
+sec('s10',2,'거버넌스·준비도·성숙도','데이터·분석 거버넌스, 준비도 6영역, 성숙도 4단계, 조직 구조',[
+{t:'데이터 거버넌스',p:'구성 요소 3가지와 체계 4요소는?',
+a:ul('<b>구성 요소</b>: 원칙 · 조직 · 프로세스','<b>체계 4요소</b>: 데이터 표준화(표준 용어·명명 규칙·메타데이터·데이터 사전) / 데이터 관리체계 / 데이터 저장소 관리 / 표준화 활동(준수 여부 점검)'),
+tip:'분석 거버넌스(조직·프로세스·데이터·시스템·교육)와 헷갈리게 섞어 묻습니다.'},
+{t:'분석 거버넌스 5요소',p:'분석 거버넌스의 5가지 구성 요소는?',
+a:ul('조직 · 프로세스 · 데이터 · 시스템 · 교육','<b>마스터플랜</b>과 <b>관리 체계</b>를 수립해 분석 업무를 지속적으로 관리·통제')},
+{t:'분석 준비도 6영역',p:'준비도 진단 6영역을 말해 보세요. 비용은 포함될까요?',
+a:ul('분석 업무 파악 · 인력 및 조직 · 분석 기법 · 분석 데이터 · 분석 문화 · IT 인프라','분석 <b>비용·ROI</b>는 진단 영역이 아님')},
+{t:'분석 성숙도 4단계',p:'도입·활용·확산·최적화 각각의 특징은?',
+a:ul('<b>도입</b>: 환경·시스템 구축, DW·마트, ETL, OLAP / 실적 분석·통계 작성','<b>활용</b>: 분석 결과를 업무에 적용, 실시간 대시보드, 통계 분석 환경','<b>확산</b>: 전사 차원 분석 관리·공유, 비즈니스 분석, 분석 전용 서버','<b>최적화</b>: 혁신·성과 향상 기여, 분석 샌드박스, 프로세스 내재화','진단 영역: 비즈니스 / 조직·역량 / IT (CMMI 기반, 비용은 고려하지 않음)')},
+{t:'준비도 × 성숙도 4유형',p:'준비도는 높고 성숙도는 낮은 유형은?',
+a:ul('<b>도입형</b>: 준비도 높음 · 성숙도 낮음. 분석 업무·기법은 부족하나 조직 등 준비는 높음','<b>정착형</b>: 준비도 낮음 · 성숙도 높음. 내부에서 제한적으로 사용','<b>준비형</b>: 둘 다 낮음. 데이터·조직·기법 등 사전 준비 필요','<b>확산형</b>: 둘 다 높음. 6가지 분석 구성 요소를 갖추고 지속 확산')},
+{t:'분석 조직 구조',p:'집중형·기능 중심·분산 조직의 차이는?',
+a:ul('<b>집중형</b>: 별도의 독립 분석 조직. 전사 관점에서 우선순위 결정, 협업 부서와 중복 업무 가능성','<b>기능 중심</b>: 별도 조직 없이 각 부서에서 직접 분석. 전사 관점의 관리가 어려움','<b>분산</b>: 분석 인력을 현업 부서에 배치. 신속한 업무 적용이 가능')}
+]);
+qs('s10',[
+['neg','다음 중 분석 준비도 진단 영역에 해당하지 않는 것은?','',['분석 업무 파악','인력 및 조직','분석 기법','투자 대비 수익(ROI) 산정'],3,'준비도 6영역은 분석 업무, 인력·조직, 기법, 데이터, 문화, IT 인프라입니다.'],
+['pos','준비도는 높지만 성숙도는 낮은 기업의 유형은?','',['도입형','정착형','준비형','확산형'],0,'준비도 높음·성숙도 낮음은 도입형입니다.'],
+['pos','다음 설명에 해당하는 유형은?','성숙도는 높으나 준비도가 낮아, 데이터·조직·분석 기법 등을 내부에서 제한적으로 사용하고 있다.',['도입형','정착형','준비형','확산형'],1,'정착형입니다. 준비형은 둘 다 낮고, 확산형은 둘 다 높은 유형입니다.'],
+['pos','분석 성숙도 모델에서 “도입” 단계에 해당하는 활동은?','',['실적 분석 및 통계 작성','분석 결과를 업무에 적용','전사 차원의 분석 관리와 공유','혁신과 성과 향상을 위한 분석 샌드박스 운영'],0,'도입 단계는 환경·시스템 구축과 실적 분석·통계 작성입니다.'],
+['pos','데이터 거버넌스의 구성 요소로 올바르게 짝지어진 것은?','',['원칙 · 조직 · 프로세스','조직 · 시스템 · 교육','원칙 · 데이터 · 시스템','프로세스 · 교육 · 기법'],0,'②는 분석 거버넌스 구성 요소의 일부입니다.']
+]);
+/* ===================== 3과목 ===================== */
+sec('s11',3,'척도와 데이터 전처리','4가지 척도, 결측값, 이상값, 변수 변환, 인코딩',[
+{t:'자료의 4가지 척도',p:'온도, 몸무게, 학년, 성별은 각각 어떤 척도일까요?',
+a:ul('<b>명목척도</b>: 분류만 가능, 순서 없음. 성별, 지역, 학교','<b>서열(순위)척도</b>: 순서는 있지만 간격의 의미는 없음. 학년, 만족도','<b>등간(구간)척도</b>: 간격이 동일해 양적 비교 가능, 절대 영점 없음. 온도, IQ, 물가지수','<b>비율척도</b>: 절대 0이 있고 사칙연산 가능. 몸무게, 나이, 거리','질적 척도 = 명목 + 서열 / 양적 척도 = 등간 + 비율'),
+tip:'섭씨 온도는 등간척도입니다(0도가 “없음”이 아님).'},
+{t:'결측값 처리',p:'결측값은 무조건 제거해야 할까요?',
+a:ul('결측값은 반드시 제거하는 것이 아니라 <b>상황에 따라 판단</b>','<b>완전 분석법</b>: 결측 자료를 삭제','<b>평균 대치</b>: 비조건(전체 평균) / 조건(회귀 등 조건부)','<b>단순 확률 대치</b>: Hot-Deck(현재 데이터에서 유사한 값), Cold-Deck(외부·이전 자료), 최근접 대치','<b>다중 대치</b>: 여러 번 대치 → 분석 → 결합','결측값을 무조건 0으로 대체하면 분포가 왜곡될 수 있음')},
+{t:'이상값 판단과 상자그림',p:'상자그림의 이상치 경계는 어떻게 구할까요?',
+a:ul('<b>ESD</b>: 평균에서 표준편차의 3배(3σ) 이상 벗어난 값','<b>사분위수</b>: Q1 − 1.5×IQR 미만, Q3 + 1.5×IQR 초과','<b>IQR</b> = Q3 − Q1','이상값이 있다고 <b>반드시 제거하는 것은 아님</b>. 분석 목적에 따라 전문가가 판단')},
+{t:'요약변수·파생변수, 변수 변환',p:'Z-score와 최소-최대 정규화의 결과 범위는?',
+a:ul('<b>요약변수</b>: 수집한 정보를 요약·집계한 변수(총 구매 금액). 재활용성이 높음','<b>파생변수</b>: 기존 변수를 변형·결합해 만든 변수. 논리적 타당성이 필요','<b>Z-score</b>: (x − 평균) / 표준편차 → 평균 0, 표준편차 1','<b>최소-최대 정규화</b>: (x − min)/(max − min) → 0~1','<b>로그 변환</b>: 우측 꼬리가 긴 분포를 완화. 박스-칵스 변환은 정규분포에 근접시키는 변환','<b>범주형 인코딩</b>: 레이블 / 원-핫(희소행렬) / 바이너리 / 타깃')}
+]);
+qs('s11',[
+['pos','다음 중 척도에 대한 설명으로 옳은 것은?','',['등간척도는 절대 영점이 존재한다.','비율척도는 절대 0이 존재하며 사칙연산이 가능하다.','서열척도는 간격이 동일해 평균이 의미를 가진다.','명목척도는 순서 정보를 가진다.'],1,'등간척도는 절대 영점이 없고, 서열척도는 간격의 의미가 없으며, 명목척도는 순서가 없습니다.'],
+['neg','자료와 척도의 연결이 올바르지 않은 것은?','',['성별 – 명목척도','만족도(1~5점) – 서열척도','섭씨 온도 – 비율척도','몸무게 – 비율척도'],2,'섭씨 온도는 절대 영점이 없는 등간척도입니다.'],
+['neg','결측값 처리에 대한 설명으로 옳지 않은 것은?','',['결측값은 항상 제거해야 한다.','평균 대치법은 분산을 과소추정할 수 있다.','Hot-Deck 대치는 현재 데이터에서 유사한 개체의 값을 사용한다.','다중 대치법은 여러 번 대치한 결과를 결합한다.'],0,'결측값은 상황에 따라 삭제·대치 등을 판단합니다. 무조건 제거하는 것이 아닙니다.'],
+['calc','상자그림에서 Q1 = 10, Q3 = 20일 때, 이상값 판단의 상한 경계값은?','',['30','35','40','45'],1,'IQR = 20 − 10 = 10. 상한 경계 = Q3 + 1.5×IQR = 20 + 15 = 35입니다.'],
+['calc','평균이 70, 표준편차가 10인 시험에서 점수 90의 Z-score는?','',['1','1.5','2','3'],2,'(90 − 70) / 10 = 2입니다.']
+]);
+
+sec('s12',3,'기초 통계와 표본추출','평균·분산, 왜도·첨도, 공분산·상관, 표본추출, CLT',[
+{t:'대푯값과 산포',p:'표본분산은 n으로 나눌까요, n−1로 나눌까요? 표준오차는?',
+a:ul('<b>평균</b> / <b>중앙값</b>(짝수 개면 가운데 두 값의 평균) / <b>최빈값</b>(여러 개 가능)','<b>분산</b>: 편차 제곱의 평균, <b>표준편차</b> = √분산','<b>표본분산</b>: n−1로 나눔','<b>표준오차</b> = σ/√n (표본이 클수록 작아짐)')},
+{t:'왜도와 첨도',p:'오른쪽으로 꼬리가 긴 분포에서 평균·중앙값·최빈값 순서는?',
+a:ul('<b>왜도 > 0</b>(오른쪽 꼬리): 최빈값 < 중앙값 < 평균','<b>왜도 < 0</b>(왼쪽 꼬리): 평균 < 중앙값 < 최빈값','<b>첨도 > 0</b> 뾰족 / <b>= 0</b> 정규분포 / <b>< 0</b> 완만','적률: 1차 평균, 2차 분산, 3차 왜도, 4차 첨도'),
+tip:'평균은 꼬리 방향으로 끌려갑니다.'},
+{t:'공분산과 상관계수',p:'두 변수가 독립이면 공분산은? 공분산이 0이면 독립일까요?',
+a:ul('<b>공분산</b>: 두 변수의 선형 관계 방향. 측정 단위의 영향을 받음','독립이면 공분산 = 0, 하지만 <b>역은 성립하지 않음</b>','<b>상관계수</b>: −1 ~ 1. 표준화되어 단위의 영향이 없음. 0은 선형 관계 없음','높은 상관이 높은 인과를 뜻하지 않음')},
+{t:'표본추출 방법 4가지',p:'층화추출과 군집추출은 집단의 성질이 어떻게 다를까요?',
+a:ul('<b>단순랜덤</b>: 무작위 추출','<b>계통추출</b>: 번호를 부여하고 일정 간격으로 추출','<b>층화추출</b>: 모집단을 이질적 층으로 나눈 뒤 각 층에서 무작위 추출. 집단 간 이질적, 집단 내 동질적','<b>군집추출</b>: 동질적인 집단으로 나눈 뒤 일부 집단을 선택해 조사. 집단 간 동질적, 집단 내 이질적','<b>표본오차</b>: 표본이 모집단을 대표하지 못해서 생김 / <b>비표본오차</b>: 그 외 모든 오차(표본 크기를 키워도 줄지 않을 수 있음)')},
+{t:'모수·통계량, 중심극한정리',p:'중심극한정리는 모집단이 정규분포여야 성립할까요?',
+a:ul('<b>모수</b>: 모집단의 특성(μ, σ²) / <b>통계량</b>: 표본의 특성(x̄, s²)','<b>CLT</b>: 모집단이 정규분포가 아니어도 표본 크기가 충분히 크면(보통 30 이상) 표본평균의 분포는 정규분포에 근사','표본평균의 기댓값 = μ, 분산 = σ²/n, 표준오차 = σ/√n','이산형·연속형 변수 모두에 적용')}
+]);
+qs('s12',[
+['pos','오른쪽으로 꼬리가 긴(양의 왜도) 분포에서 올바른 대소 관계는?','',['평균 < 중앙값 < 최빈값','최빈값 < 중앙값 < 평균','중앙값 < 평균 < 최빈값','평균 = 중앙값 = 최빈값'],1,'평균은 꼬리 방향으로 끌려가 가장 큽니다.'],
+['pos','모집단을 이질적인 층으로 나눈 뒤 각 층에서 무작위로 표본을 추출하는 방법은?','',['단순랜덤추출','계통추출','층화추출','군집추출'],2,'층화추출입니다. 계통추출은 번호를 매겨 일정 간격으로 뽑는 방법입니다.'],
+['pos','군집추출에 대한 설명으로 옳은 것은?','',['집단 간에는 동질적이고 집단 내에서는 이질적이다.','집단 간에는 이질적이고 집단 내에서는 동질적이다.','번호를 매겨 일정 간격으로 추출한다.','모든 개체를 조사한다.'],0,'②는 층화추출의 설명입니다. 군집추출은 일부 집단을 선택해 그 안에서 조사합니다.'],
+['neg','공분산과 상관계수에 대한 설명으로 옳지 않은 것은?','',['상관계수는 −1 이상 1 이하의 값을 가진다.','공분산은 변수의 측정 단위에 영향을 받는다.','두 변수가 독립이면 공분산은 0이다.','공분산이 0이면 두 변수는 반드시 독립이다.'],3,'독립이면 공분산이 0이지만, 공분산이 0이어도 독립이라고 단정할 수 없습니다.'],
+['calc','모표준편차가 20, 표본 크기가 100일 때 표본평균의 표준오차는?','',['0.2','2','20','200'],1,'σ/√n = 20/10 = 2입니다.'],
+['neg','중심극한정리에 대한 설명으로 옳지 않은 것은?','',['표본 크기가 충분히 크면 표본평균의 분포는 정규분포에 근사한다.','모집단이 정규분포일 때만 성립한다.','표본평균의 분산은 σ²/n이다.','이산형·연속형 변수 모두에 적용할 수 있다.'],1,'모집단이 정규분포가 아니어도 표본이 충분히 크면 성립하는 것이 핵심입니다.']
+]);
+
+sec('s13',3,'확률과 확률분포','조건부·독립·배반, 베이즈, 이산·연속 분포',[
+{t:'확률의 기본 용어',p:'독립 사건과 배반 사건의 곱셈·교집합 식은?',
+a:ul('<b>조건부 확률</b>: P(A|B) = P(A∩B) / P(B)','<b>독립 사건</b>: P(A∩B) = P(A)·P(B), P(A|B) = P(A)','<b>배반 사건</b>: P(A∩B) = 0 (동시에 일어날 수 없음)','<b>베이즈 정리</b>: P(A|B) = P(B|A)·P(A) / P(B) (사후 = 가능도 × 사전 / 증거)'),
+tip:'독립(곱이 같다)과 배반(교집합이 0)은 서로 다른 개념입니다.'},
+{t:'이산확률분포',p:'기댓값이 np, 분산이 np(1−p)인 분포는? 발생 횟수 모델은?',
+a:ul('<b>이산균등</b>: E = (n+1)/2','<b>베르누이</b>: E = p, V = p(1−p)','<b>이항</b>: E = np, V = np(1−p)','<b>기하</b>: 처음 성공까지 시도 횟수. E = 1/p','<b>포아송</b>: 단위 시간·공간의 발생 횟수. E = V = λ','<b>초기하</b>: 비복원 추출, 시행마다 성공확률 변함')},
+{t:'연속확률분포',p:'두 집단의 분산이 같은지 검정할 때는 어느 분포?',
+a:ul('<b>정규분포</b> N(μ, σ²), 표준정규 N(0,1)','<b>t분포</b>: 표본이 작고(n<30) 모분산을 모를 때, 두 집단 평균 비교','<b>카이제곱 분포</b>: 단일 모집단의 분산 검정, 적합도·독립성 검정','<b>F분포</b>: 두 집단의 분산 동일성 검정, ANOVA','<b>지수분포</b>: 사건 간 경과 시간','<b>PMF</b>: 이산, 함수값 자체가 확률 / <b>PDF</b>: 연속, 면적이 확률')}
+]);
+qs('s13',[
+['calc','사건 A, B가 서로 독립이고 P(A) = 0.3, P(B) = 0.4일 때 P(A∩B)는?','',['0.12','0.7','0.1','0.4'],0,'독립이면 P(A∩B) = P(A)·P(B) = 0.12입니다.'],
+['pos','두 사건 A, B가 배반 사건일 때 항상 성립하는 것은?','',['P(A∩B) = 0','P(A∩B) = P(A)P(B)','P(A|B) = P(A)','P(A∪B) = P(A)P(B)'],0,'배반 사건은 동시에 일어나지 않으므로 교집합 확률이 0입니다.'],
+['calc','이항분포 B(n=10, p=0.3)의 기댓값과 분산은?','',['3, 2.1','3, 0.21','7, 2.1','0.3, 2.1'],0,'E = np = 3, V = np(1−p) = 10×0.3×0.7 = 2.1입니다.'],
+['pos','콜센터에 단위 시간당 걸려오는 전화 건수처럼 사건의 발생 횟수를 모델링하는 분포는?','',['베르누이분포','이항분포','포아송분포','기하분포'],2,'단위 시간·공간 내 발생 횟수는 포아송분포입니다.'],
+['pos','두 집단의 분산이 동일한지 검정할 때 사용하는 분포는?','',['정규분포','t분포','카이제곱분포','F분포'],3,'분산비 검정에는 F분포를 사용합니다.']
+]);
+
+sec('s14',3,'추정과 가설검정','추정량, 신뢰구간, 가설검정, 1·2종 오류, 비모수 검정',[
+{t:'점추정·구간추정과 좋은 추정량',p:'바람직한 추정량의 4가지 조건은?',
+a:ul('<b>점추정</b>: 하나의 값으로 모수 추정 / <b>구간추정</b>: 모수를 포함할 구간을 확률적으로 계산','<b>불편성</b>: 추정량의 기댓값 = 모수','<b>효율성</b>: 분산이 최소','<b>일치성</b>: 표본이 커질수록 모수에 수렴','<b>충분성</b>: 모수 추정에 필요한 정보를 모두 포함')},
+{t:'신뢰구간',p:'표본이 커지면 신뢰구간 폭은? 신뢰수준을 높이면?',
+a:ul('x̄ ± z·σ/√n','표본 크기 n이 클수록 구간이 좁아짐(정밀해짐)','신뢰수준이 높을수록 구간이 넓어짐','z값: 90% 1.645 / 95% 1.96 / 99% 2.575','모분산을 모르면 t분포 사용 (자유도 n−1)')},
+{t:'가설검정과 오류',p:'제1종 오류와 제2종 오류는 각각 무엇일까요?',
+a:ul('<b>귀무가설(H0)</b>: 기존 주장, 기각의 대상 / <b>대립가설(H1)</b>: 입증하려는 주장','<b>유의수준 α</b>: 제1종 오류를 범할 최대 허용 한계(보통 0.05)','<b>p-value < α</b> → 귀무가설 기각','<b>제1종 오류</b>: H0이 참인데 기각 (α)','<b>제2종 오류</b>: H0이 거짓인데 채택 (β). 검정력 = 1 − β'),
+tip:'p-value ≥ 0.05 이면 “귀무가설을 기각하지 못한다”입니다. 귀무가설이 참이라고 증명한 것이 아닙니다.'},
+{t:'모수·비모수 검정과 카이제곱 자유도',p:'t검정은 모수 검정일까요?',
+a:ul('<b>모수 검정</b>: 정규분포 등 분포 가정 (t검정, ANOVA)','<b>비모수 검정</b>: 분포 가정 없음, 표본이 작거나 순서형일 때. 부호 검정, 윌콕슨 순위합·부호순위, 맨-휘트니 U, 크러스칼-왈리스, 콜모고로프-스미르노프, 스피어만','정규성이 만족되면 모수 검정이 보통 더 효율적','<b>카이제곱 자유도</b>: 적합도 k−1 / 독립성·동질성 (r−1)(c−1)')}
+]);
+qs('s14',[
+['pos','유의수준 0.05에서 검정을 수행했더니 p-value가 0.03이었다. 올바른 결론은?','',['귀무가설을 기각한다.','귀무가설을 채택한다.','판단할 수 없다.','대립가설을 기각한다.'],0,'p-value < α이므로 귀무가설을 기각합니다.'],
+['pos','제1종 오류에 대한 설명으로 옳은 것은?','',['귀무가설이 참인데 기각하는 오류','귀무가설이 거짓인데 채택하는 오류','대립가설이 참인데 기각하는 오류','검정력을 높이는 방법'],0,'②는 제2종 오류입니다. 제1종 오류의 확률이 유의수준 α입니다.'],
+['neg','바람직한 추정량의 조건으로 보기 어려운 것은?','',['불편성','효율성','일치성','복잡성'],3,'불편성, 효율성, 일치성, 충분성이 조건입니다.'],
+['pos','다른 조건이 같을 때 신뢰구간의 폭을 좁히는 방법은?','',['표본 크기를 늘린다.','신뢰수준을 99%로 높인다.','모표준편차가 큰 집단을 선택한다.','표본 크기를 줄인다.'],0,'폭은 z·σ/√n이므로 n이 커질수록 좁아집니다.'],
+['neg','다음 중 비모수 검정이 아닌 것은?','',['부호 검정','맨-휘트니 U 검정','크러스칼-왈리스 검정','일표본 t검정'],3,'t검정은 정규성을 가정하는 모수 검정입니다.'],
+['calc','행이 3개, 열이 4개인 분할표의 카이제곱 독립성 검정에서 자유도는?','',['5','6','7','12'],1,'(3−1)×(4−1) = 6입니다.']
+]);
+
+sec('s15',3,'회귀분석','가정, 최소제곱법, R², 규제, 변수 선택, 평가 지표',[
+{t:'회귀분석의 가정',p:'회귀분석 5가지 가정을 떠올려 보세요.',
+a:ul('<b>선형성</b>: 독립변수와 종속변수가 선형','<b>독립성</b>: <b>오차 간</b> 상관이 없음 (Durbin-Watson)','<b>정규성</b>: 오차가 정규분포 (Q-Q plot, Shapiro-Wilk)','<b>등분산성</b>: 오차의 분산이 일정','<b>비상관성</b>: 오차끼리 상관 없음','명목형 변수는 더미변수로 변환'),
+tip:'“독립성”은 독립변수끼리가 아니라 오차끼리의 독립입니다.'},
+{t:'최소제곱법과 결정계수',p:'R²는 어떻게 계산할까요? 수정 R²는 왜 쓸까요?',
+a:ul('<b>OLS</b>: 잔차제곱합(SSE)이 최소가 되는 직선','<b>SST = SSR + SSE</b> / <b>R² = SSR/SST = 1 − SSE/SST</b> (0~1)','단순선형회귀에서 R² = r² (상관계수의 제곱)','<b>수정 R²</b>: 독립변수 수를 고려해 보정. 변수가 늘었다고 무조건 증가하지 않음','절편 포함 OLS에서는 잔차의 합과 평균이 항상 0')},
+{t:'회귀 종류와 규제(라쏘·릿지)',p:'일부 계수를 정확히 0으로 만드는 것은?',
+a:ul('단순회귀 / 다중회귀 / 다항회귀','<b>라쏘</b>(L1): 가중치 절댓값 합에 패널티. 일부 계수를 0으로 → 변수 선택','<b>릿지</b>(L2): 가중치 제곱합에 패널티. 계수를 0에 가깝게 하지만 0으로 만들지는 않음. 다중공선성 완화','<b>엘라스틱넷</b>: L1 + L2')},
+{t:'모형 검정과 ANOVA',p:'회귀계수 t검정의 귀무가설은? 잔차 자유도는?',
+a:ul('절차: ① 변수 설정 → ② 계수 추정 → ③ 계수 유의성(t검정 p<0.05) → ④ 모형 유의성(F검정) → ⑤ 결정계수','<b>t검정</b> H0: β = 0, H1: β ≠ 0','<b>F = MSR/MSE</b>, 자유도: 회귀 k, 잔차 n−k−1, 전체 n−1','다중회귀 잔차 자유도 = n − k − 1 (k는 독립변수 수)')},
+{t:'평가 지표와 변수 선택',p:'MAE, MSE, RMSE, MAPE의 차이는?',
+a:ul('<b>MAE</b>: 절댓값 오차의 평균','<b>MSE</b>: 제곱 오차의 평균 (큰 오차에 큰 패널티)','<b>RMSE</b>: MSE의 제곱근 (원래 단위로 해석)','<b>MAPE</b>: 절대 백분율 오차의 평균','<b>전진선택</b>: 하나씩 추가 / <b>후진제거</b>: 모두 넣고 하나씩 제거 / <b>단계별</b>: 추가·제거 반복 (AIC, BIC)')}
+]);
+qs('s15',[
+['neg','선형회귀분석의 가정에 대한 설명으로 옳지 않은 것은?','',['선형성: 독립변수와 종속변수 사이에 선형 관계가 있다.','독립성: 오차 간에 상관관계가 없다.','등분산성: 오차의 분산이 일정하다.','독립성: 독립변수들 사이에 상관관계가 없어야 한다는 뜻이다.'],3,'독립성은 오차 간의 독립을 말합니다. 독립변수 간 상관은 다중공선성 문제입니다.'],
+['calc','단순선형회귀에서 R² = 0.64이고 기울기가 양수일 때, 상관계수 r은?','',['0.4','0.64','0.8','−0.8'],2,'단순선형회귀에서 R² = r²이므로 r = ±0.8이고, 기울기가 양수이므로 0.8입니다.'],
+['pos','라쏘(Lasso)와 릿지(Ridge)에 대한 설명으로 옳은 것은?','',['라쏘는 L1 규제로 일부 계수를 0으로 만들어 변수 선택 효과가 있다.','릿지는 L1 규제를 사용한다.','라쏘는 모든 계수를 0이 아닌 값으로 유지한다.','릿지는 변수 선택에 가장 적합하다.'],0,'릿지는 L2로 계수를 0에 가깝게만 줄입니다.'],
+['pos','모든 변수를 포함한 모형에서 기여도가 낮은 변수를 하나씩 제거하는 변수 선택법은?','',['전진선택법','후진제거법','단계별 선택법','라쏘'],1,'후진제거법입니다. 단계별 선택법은 추가와 제거를 반복합니다.'],
+['calc','표본이 50개, 독립변수가 3개인 다중회귀에서 잔차의 자유도는?','',['46','47','49','50'],0,'n − k − 1 = 50 − 3 − 1 = 46입니다.'],
+['neg','회귀 평가 지표에 대한 설명으로 옳지 않은 것은?','',['MSE는 큰 오차에 더 큰 패널티를 준다.','RMSE는 MSE의 제곱근이다.','MAPE는 오차를 백분율로 표현한다.','MAE는 오차를 제곱하여 평균한다.'],3,'MAE는 오차의 절댓값을 평균합니다. 제곱 평균은 MSE입니다.']
+]);
+
+sec('s16',3,'상관분석과 다변량 분석','피어슨·스피어만, 다중공선성, PCA, MDS, 심슨의 역설',[
+{t:'피어슨과 스피어만 상관',p:'비선형이지만 단조 관계일 때 쓰는 것은?',
+a:ul('<b>피어슨</b>: 연속형 수치 데이터, <b>선형</b> 관계만 측정, 이상치에 매우 민감','<b>스피어만</b>: 서열·순위 데이터, <b>단조</b> 관계(비선형 포함), 이상치에 덜 민감','순서 정보가 없는 명목척도에는 부적절','양의 상수를 곱하거나 더해도 상관계수는 불변, 음수를 곱하면 부호만 반대','상관관계 ≠ 인과관계')},
+{t:'다중공선성과 편상관',p:'다중공선성은 무엇과 무엇의 상관일까요?',
+a:ul('<b>다중공선성</b>: 회귀에서 <b>독립변수들 간</b> 강한 상관관계. 회귀계수 추정이 불안정','진단: <b>VIF</b> / 해결: 상관 높은 변수 제거, 주성분 분석 등','<b>편상관</b>: 다른 변수의 영향을 제거한 두 변수 간 순수한 상관')},
+{t:'주성분 분석(PCA)',p:'PCA는 지도학습일까요, 비지도학습일까요?',
+a:ul('<b>비지도 학습</b>, 차원 축소. 변수들의 선형결합으로 직교하는 주성분을 만듦','첫 번째 주성분이 분산을 가장 많이 설명','선택: 누적 기여율 70~90%, 고윳값 > 1, Scree plot에서 꺾이는 지점 직전','전체 주성분의 누적 기여율은 항상 100%','<b>바이플롯</b>: 주성분 점수와 변수의 영향력을 함께 표현')},
+{t:'MDS, 다변량 기법, 심슨의 역설',p:'부분 집단의 경향이 전체에서 뒤집히는 현상은?',
+a:ul('<b>MDS</b>: 개체 간 거리를 저차원(2~3차원)에 점으로 표현. 스트레스 값이 0에 가까울수록 좋음','<b>요인분석</b>: 직각회전(Varimax) 등 / <b>판별분석</b>: 집단을 가장 잘 구분 / <b>정준상관분석</b>: 두 변수 집단 간 상관','<b>심슨의 역설</b>: 부분 집단에서의 경향이 전체에서 사라지거나 역전. 교란변수 때문 → 층화 분석으로 보정')}
+]);
+qs('s16',[
+['neg','스피어만 상관계수에 대한 설명으로 옳지 않은 것은?','',['서열척도 데이터에 사용할 수 있다.','단조 관계를 측정한다.','피어슨 상관계수보다 이상치에 덜 민감하다.','명목척도 변수에도 적합하다.'],3,'명목척도는 순서 정보가 없어 스피어만 상관에 부적절합니다.'],
+['calc','X와 Y의 상관계수가 0.5일 때, (2X + 0.2)와 (3Y + 0.3)의 상관계수는?','',['−0.5','0.5','1','6'],1,'양의 상수 곱셈과 상수 덧셈으로는 상관계수가 변하지 않습니다.'],
+['pos','−2X와 Y의 상관계수는? (X와 Y의 상관계수는 0.5)','',['0.5','−0.5','−1','2'],1,'음수를 곱하면 부호만 바뀌어 −0.5입니다.'],
+['neg','주성분 분석(PCA)에 대한 설명으로 옳지 않은 것은?','',['차원 축소가 주된 목적이다.','주성분은 서로 직교한다.','분산이 큰 순서로 주성분을 추출한다.','독립변수와 종속변수의 인과관계를 분석하는 지도학습 기법이다.'],3,'PCA는 종속변수를 쓰지 않는 비지도 학습입니다.'],
+['calc','주성분의 누적 기여율이 PC1 62.0%, PC2 86.8%, PC3 95.7%, PC4 100%일 때, 90% 이상을 설명하려면 최소 몇 개의 주성분이 필요한가?','',['1개','2개','3개','4개'],2,'2개는 86.8%로 90%에 못 미치고, 3개에서 95.7%가 됩니다.'],
+['pos','부분 집단에서 나타난 경향이 전체 집단에서는 사라지거나 반대로 나타나는 현상은?','',['심슨의 역설','다중공선성','과적합','비표본오차'],0,'교란변수를 고려하지 않아 생기는 현상으로 층화 분석으로 보정합니다.']
+]);
+
+sec('s17',3,'시계열 분석','정상성, 시계열 요인, AR·MA·ARIMA, ACF·PACF',[
+{t:'정상성과 차분',p:'평균이 불안정할 때와 분산이 불안정할 때 각각 어떻게 할까요?',
+a:ul('<b>정상 시계열</b>: 평균·분산이 일정하고, 공분산은 시점이 아니라 <b>시차(lag)</b>에만 의존','평균이 일정하지 않으면 <b>차분</b>(Yt − Yt−1)','분산이 일정하지 않으면 <b>로그 변환</b>(변환)')},
+{t:'시계열 분해 요인',p:'순환요인과 계절요인의 차이는?',
+a:ul('<b>추세</b>: 장기적인 방향성','<b>계절</b>: <b>고정된</b> 주기(요일·월·분기)의 변화','<b>순환</b>: 알려지지 않은 주기, 경제·사회적 요인','<b>불규칙</b>: 위 요인으로 설명되지 않는 오차','<b>이동평균법</b>: 일정 기간 평균 / <b>지수평활법</b>: 최근 관측치에 더 큰 가중치'),
+tip:'“순환 = 고정 주기”라고 바꿔 쓴 보기는 틀린 보기입니다.'},
+{t:'AR, MA, ARMA, ARIMA',p:'과거 값을 쓰는 모형과 과거 오차를 쓰는 모형은?',
+a:ul('<b>AR(p)</b>: 과거 <b>관측값</b>의 선형결합','<b>MA(q)</b>: 과거 <b>백색잡음(오차)</b>의 선형결합. 항상 정상','<b>ARMA</b>: AR + MA, 정상 시계열에 적용','<b>ARIMA(p,d,q)</b>: d차 차분 후 ARMA(p,q). 비정상 시계열에 적용','예) ARIMA(3,1,0) = 1차 차분 후 AR(3) / ARIMA(0,1,0)은 차분만')},
+{t:'ACF·PACF로 모형 찾기',p:'ACF가 점진 감소, PACF가 3차부터 절단이면?',
+a:ul('<b>AR(p)</b>: ACF 점진적 감소 / PACF <b>p+1차부터 절단</b>','<b>MA(q)</b>: ACF <b>q+1차부터 절단</b> / PACF 점진적 감소','예) PACF가 3차부터 절단 → AR(2)','예) ACF가 4차부터 절단 → MA(3)'),
+tip:'절단이 시작되는 차수에서 1을 빼야 차수가 됩니다.'}
+]);
+qs('s17',[
+['neg','시계열 분해 요인에 대한 설명으로 옳지 않은 것은?','',['추세요인은 장기적인 방향성 변동이다.','계절요인은 고정된 주기를 가지는 변동이다.','순환요인은 고정된 주기를 가지는 변동이다.','불규칙요인은 다른 요인으로 설명할 수 없는 오차이다.'],2,'고정 주기는 계절요인입니다. 순환요인은 주기가 알려지지 않은 변동입니다.'],
+['pos','ARIMA(2,1,1) 모형에 대한 설명으로 옳은 것은?','',['1차 차분 후 ARMA(2,1)을 적용한다.','2차 차분 후 ARMA(1,1)을 적용한다.','차분 없이 AR(2)와 MA(1)을 결합한다.','1차 차분 후 AR(1)과 MA(2)를 결합한다.'],0,'ARIMA(p,d,q)에서 p=2(AR), d=1(차분), q=1(MA)입니다.'],
+['pos','ACF가 점진적으로 감소하고 PACF가 3차 시차부터 절단되는 경우 적합한 모형은?','',['AR(2)','AR(3)','MA(2)','MA(3)'],0,'PACF가 p+1차부터 절단되므로 p=2, AR(2)입니다.'],
+['pos','ACF가 4차 시차부터 절단되고 PACF는 완만하게 감소하는 경우 적합한 모형은?','',['AR(3)','AR(4)','MA(3)','MA(4)'],2,'ACF가 q+1차부터 절단되므로 q=3, MA(3)입니다.'],
+['neg','정상 시계열에 대한 설명으로 옳지 않은 것은?','',['평균이 시간에 관계없이 일정하다.','분산이 시간에 관계없이 일정하다.','공분산은 시차에만 의존한다.','공분산은 관측 시점에 따라 달라진다.'],3,'정상 시계열의 공분산은 시점이 아닌 시차에만 의존합니다.'],
+['combo','시계열 모형에 대한 설명으로 올바른 것을 모두 고르시오.','가. AR(p) 모형은 PACF가 p+1차부터 절단된다.<br>나. MA(q) 모형은 항상 비정상 시계열이다.<br>다. ARMA 모형은 정상 시계열에 적용한다.',['가','가, 다','나, 다','가, 나, 다'],1,'MA 모형은 유한한 백색잡음의 결합이므로 항상 정상입니다. 나가 틀립니다.']
+]);
+
+sec('s18',3,'분류: 로지스틱·의사결정나무·앙상블','오즈·로짓, 지니·엔트로피, CART·C4.5·CHAID, 배깅·부스팅, k-NN',[
+{t:'로지스틱 회귀와 오즈',p:'x가 1 증가하면 로짓과 오즈는 각각 어떻게 변할까요?',
+a:ul('종속변수가 이항 범주(0/1)일 때 사용. 계수는 최대우도법으로 추정','<b>오즈</b> = P/(1−P), <b>로짓</b> = ln(오즈) = β₀ + β₁x','x가 1 증가 → 로짓은 β₁ 증가, <b>오즈는 e<sup>β₁</sup>배</b> (exp(β) = 오즈비)','시그모이드 함수 1/(1+e<sup>−z</sup>)로 확률(0~1) 변환','오즈비 OR = (a/b)/(c/d), 상대위험도 RR = (a/(a+b))/(c/(c+d))')},
+{t:'의사결정나무',p:'CART, C4.5, CHAID가 사용하는 분리 기준은?',
+a:ul('<b>CART</b>: 지니 지수(분류), 분산 감소량(회귀)','<b>C4.5/C5.0</b>: 엔트로피 지수','<b>CHAID</b>: 카이제곱 통계량(분류), ANOVA F통계량(회귀)','<b>지니</b> = 1 − ΣPᵢ² / <b>엔트로피</b> = −ΣPᵢ·log₂Pᵢ','<b>가지치기</b>: 과대적합 방지, 일반화 성능 향상','장점: 해석 용이 / 단점: 과대적합 가능, 경계 부근 오차')},
+{t:'앙상블',p:'배깅과 부스팅의 핵심 차이는?',
+a:ul('<b>배깅</b>: 부트스트랩으로 여러 표본을 만들어 병렬 학습 후 집계. 분산 감소','<b>부스팅</b>: 오분류 데이터에 가중치를 주며 순차 학습. AdaBoost, GBM, XGBoost, LightGBM','<b>랜덤포레스트</b>: 배깅 + 변수 무작위 선택. 이상치에 강건','<b>스태킹</b>: 개별 모델의 예측을 메타 모델에 입력','<b>보팅</b>: 여러 모델의 결과를 투표로 결정')},
+{t:'k-NN',p:'k가 아주 작으면 어떤 문제가 생길까요?',
+a:ul('가까운 k개 이웃의 다수결로 분류하는 거리 기반 지도학습','사전 학습이 없는 lazy 방식','<b>k가 작으면 과대적합, k가 크면 과소적합</b>')}
+]);
+qs('s18',[
+['pos','로지스틱 회귀에서 e<sup>β₂</sup> = 0.489일 때, X₂가 1 증가하면 어떻게 해석하는가?','',['오즈가 0.489배가 된다.','확률이 0.489배가 된다.','오즈가 0.489만큼 증가한다.','확률이 0.489만큼 증가한다.'],0,'exp(β)는 오즈비입니다. X가 1 증가할 때 오즈가 exp(β)배가 됩니다.'],
+['calc','어떤 노드에 Good 20개, Bad 30개가 있을 때 지니 지수는?','',['0.24','0.48','0.52','0.60'],1,'1 − (0.4² + 0.6²) = 1 − 0.52 = 0.48입니다.'],
+['pos','의사결정나무 알고리즘과 분리 기준의 연결이 올바른 것은?','',['CART – 엔트로피 지수','C4.5 – 지니 지수','CHAID – 카이제곱 통계량','CART – 카이제곱 통계량'],2,'CART는 지니, C4.5는 엔트로피, CHAID는 카이제곱(분류)·ANOVA F(회귀)입니다.'],
+['neg','앙상블 기법에 대한 설명으로 옳지 않은 것은?','',['배깅은 부트스트랩 표본으로 분산을 줄인다.','부스팅은 오분류된 관측치에 더 큰 가중치를 부여한다.','랜덤포레스트는 배깅에 변수의 무작위 선택을 더한 방식이다.','배깅은 이전 모델의 오분류에 가중치를 주며 순차적으로 학습한다.'],3,'순차적으로 오분류에 가중치를 주는 것은 부스팅입니다.'],
+['neg','k-NN에 대한 설명으로 옳지 않은 것은?','',['거리 기반의 지도학습 분류 알고리즘이다.','사전 학습 없이 새로운 데이터를 분류한다.','k가 크면 과소적합 위험이 있다.','k가 클수록 과대적합 위험이 커진다.'],3,'k가 작을수록 과대적합, 클수록 과소적합 위험이 커집니다.'],
+['pos','의사결정나무에서 가지치기(pruning)의 주된 목적은?','',['과대적합 방지와 일반화 성능 향상','불순도 증가','변수의 개수 증가','학습 데이터의 정확도 극대화'],0,'너무 깊게 자란 나무를 줄여 과대적합을 막습니다.']
+]);
+
+sec('s19',3,'인공신경망과 SVM','활성화 함수, 기울기 소실, 과적합 방지, SVM',[
+{t:'인공신경망',p:'인공신경망의 대표적 단점 두 가지는?',
+a:ul('입력층 · 은닉층 · 출력층. 비선형 복잡 관계를 학습','결과 해석이 어렵고(블랙박스) 은닉층 수·노드 수를 정해야 함','은닉층이 많으면 과대적합, 적으면 과소적합','<b>기울기 소실</b>: 역전파에서 입력층에 가까울수록 기울기가 0에 가까워져 학습이 안 되는 문제','<b>경사하강법</b>: 오차를 줄이는 방향으로 가중치 갱신')},
+{t:'활성화 함수',p:'다범주 확률의 합이 1이 되는 함수는? 기울기 소실을 완화하는 함수는?',
+a:ul('<b>시그모이드</b>: 0~1 값, 이진 분류 (로지스틱과 동일)','<b>소프트맥스</b>: 다범주 확률 출력, 합이 1','<b>tanh</b>: −1~1 값, 시그모이드보다 최적화 개선','<b>ReLU</b>: max(0, x). 기울기 소실 완화, 빠른 학습')},
+{t:'과적합 방지 방법',p:'신경망 과적합을 줄이는 방법 5가지는?',
+a:ul('규제(L1·L2) / 드롭아웃(일부 뉴런 비활성화) / 조기 종료 / 데이터 증강 / 배치 정규화 / 모델 복잡도 감소 / 교차검증')},
+{t:'SVM(서포트 벡터 머신)',p:'서포트 벡터와 마진은 무엇일까요?',
+a:ul('<b>초평면</b>: 두 클래스를 나누는 결정 경계(n차원이면 n−1차원)','<b>서포트 벡터</b>: 초평면에 가장 가까운 데이터 포인트','<b>마진</b>: 초평면과 서포트 벡터 사이 거리 → <b>최대화</b>할수록 일반화 성능↑','<b>하드 마진</b>: 오류 허용 없음 / <b>소프트 마진</b>: 일부 오류 허용','<b>커널 기법</b>: 비선형 데이터를 고차원으로 매핑. 선형·다항·가우시안(RBF)·시그모이드')}
+]);
+qs('s19',[
+['pos','다음 설명에 해당하는 활성화 함수는?','입력값이 양수이면 그대로 출력하고, 음수이면 0을 출력한다. 기울기 소실 문제를 완화한다.',['시그모이드','소프트맥스','ReLU','tanh'],2,'ReLU(max(0, x))입니다.'],
+['neg','인공신경망에 대한 설명으로 옳지 않은 것은?','',['은닉층 수가 많으면 복잡한 비선형 관계를 학습할 수 있다.','가중치를 보면 변수의 영향을 명확하고 쉽게 해석할 수 있다.','은닉층이 깊으면 기울기 소실이 발생할 수 있다.','드롭아웃은 과적합 방지 기법이다.'],1,'신경망은 결과 해석이 어려운 블랙박스 성격이 있습니다.'],
+['pos','SVM에 대한 설명으로 옳은 것은?','',['초평면과 가장 가까운 데이터를 서포트 벡터라고 한다.','마진은 작을수록 일반화 성능이 좋다.','커널 기법은 데이터의 차원을 줄인다.','하드 마진은 오류를 일부 허용한다.'],0,'마진은 클수록, 커널은 고차원 매핑, 소프트 마진이 오류를 허용합니다.'],
+['pos','소프트 마진 SVM에 대한 설명으로 옳은 것은?','',['모든 데이터를 오류 없이 분리해야 한다.','결정 경계 안쪽에 데이터를 일부 허용해 오류를 어느 정도 허용한다.','선형 분리가 불가능한 데이터에는 쓸 수 없다.','서포트 벡터가 존재하지 않는다.'],1,'소프트 마진은 오류를 어느 정도 허용해 일반화 성능을 높입니다.'],
+['pos','은닉층이 깊은 신경망에서 시그모이드 함수를 쓰면 발생하기 쉬운 문제는?','',['기울기 소실','차원의 저주','다중공선성','표본 편향'],0,'시그모이드의 미분값이 작아 역전파 시 입력층 쪽 기울기가 사라집니다.']
+]);
+
+sec('s20',3,'모델 평가와 과적합','과대·과소적합, 데이터 분할, 교차검증, 오분류표, ROC',[
+{t:'과대적합과 과소적합',p:'과대적합일 때 훈련 오차와 검증 오차는?',
+a:ul('<b>과대적합</b>: 훈련 데이터를 과도하게 학습. 낮은 편향·<b>높은 분산</b>. 훈련 오차↓ 검증 오차↑. 대책: 규제 추가, 복잡도 낮춤','<b>과소적합</b>: 패턴을 충분히 학습 못함. <b>높은 편향</b>·낮은 분산. 훈련·검증 오차 모두 높음. 대책: 규제 완화, 복잡도 높임','일반화: 학습에 쓰이지 않은 새 데이터에서도 안정적으로 좋은 성능')},
+{t:'데이터 분할과 교차검증',p:'부트스트랩에서 한 번도 뽑히지 않을 확률은?',
+a:ul('훈련(약 50%) · 검증(약 30%) · 평가(약 20%)','<b>홀드아웃</b>: 훈련/평가 데이터는 서로 중복 불가','<b>K-fold</b>: k개 집단으로 나눠 k번 검증','<b>LOOCV</b>: 1개만 검증, 나머지 n−1개로 학습','<b>부트스트랩</b>: 복원추출. 한 번도 안 뽑힐 확률 (1−1/n)<sup>n</sup> ≈ 36.8%, 훈련용 약 63.2%','시계열은 시간 순서를 유지해야 함 (data leakage 주의)')},
+{t:'오분류표와 평가 지표',p:'정밀도와 재현율은 분모가 어떻게 다를까요?',
+a:ul('TP, FP, FN, TN','<b>정확도</b> = (TP+TN)/전체','<b>정밀도</b> = TP/(TP+FP) — 양성이라 예측한 것 중 실제 양성','<b>재현율(민감도)</b> = TP/(TP+FN) — 실제 양성 중 예측 성공','<b>특이도</b> = TN/(TN+FP)','<b>F1</b> = 2·정밀도·재현율/(정밀도+재현율)','<b>오분류율</b> = 1 − 정확도')},
+{t:'ROC 곡선과 향상도',p:'ROC에서 가장 이상적인 점의 좌표는?',
+a:ul('<b>ROC</b>: x축 FPR(1−특이도), y축 TPR(민감도)','이상적 모델은 좌상단 <b>(0, 1)</b>에 가까움, AUC가 1에 가까울수록 좋음','<b>향상도 곡선·이익도표</b>: 등급별 반응률·향상도를 보며 분류 모형의 예측력 평가')}
+],'cm');
+qs('s20',[
+['pos','다음 중 정밀도(Precision)의 정의로 올바른 것은?','',['TP / (TP + FP)','TP / (TP + FN)','TN / (TN + FP)','(TP + TN) / 전체'],0,'양성으로 예측한 것 중 실제 양성의 비율입니다. ②는 재현율, ③은 특이도입니다.'],
+['calc','TP = 40, FP = 10, FN = 20, TN = 30일 때 재현율은?','',['4/5','2/3','3/4','1/2'],1,'TP/(TP+FN) = 40/60 = 2/3입니다.'],
+['calc','TP = 40, FP = 10, FN = 20, TN = 30일 때 정확도는?','',['0.6','0.7','0.8','0.9'],1,'(40+30)/100 = 0.7입니다.'],
+['neg','과대적합에 대한 설명으로 옳지 않은 것은?','',['훈련 오차는 낮고 검증 오차는 높다.','모델이 지나치게 복잡할 때 발생하기 쉽다.','규제를 추가하면 완화할 수 있다.','높은 편향과 낮은 분산의 특징을 가진다.'],3,'과대적합은 낮은 편향·높은 분산이고, 높은 편향·낮은 분산은 과소적합입니다.'],
+['pos','부트스트랩에서 크기 100의 데이터를 복원추출 100번 할 때, 특정 관측치가 한 번도 선택되지 않을 확률은?','',['(1/100)<sup>100</sup>','1 − (1/100)<sup>100</sup>','(1 − 1/100)<sup>100</sup>','100 × (1/100)'],2,'한 번 뽑을 때 안 뽑힐 확률 0.99를 100번 곱한 값으로, n이 크면 약 36.8%입니다.'],
+['pos','ROC 곡선에서 가장 이상적인 분류기가 위치하는 (FPR, TPR) 좌표는?','',['(0, 1)','(1, 0)','(0, 0)','(1, 1)'],0,'FPR = 0, TPR = 1이 이상적이며, 곡선 아래 면적(AUC)이 1에 가까울수록 좋습니다.'],
+['neg','교차검증에 대한 설명으로 옳지 않은 것은?','',['K-fold는 k번 학습과 검증을 수행한다.','LOOCV는 한 번에 1개의 관측치만 검증에 사용한다.','시계열 데이터를 시간 순서를 무시하고 무작위로 나누면 data leakage가 생길 수 있다.','홀드아웃은 훈련 데이터와 평가 데이터가 서로 중복될 수 있다.'],3,'홀드아웃은 훈련 데이터와 평가 데이터가 서로 겹치지 않도록 분할합니다.']
+]);
+
+sec('s21',3,'군집분석','거리, 계층적·비계층적 군집, DBSCAN, SOM, 평가',[
+{t:'거리 측정',p:'상관관계를 반영하는 거리는? 이진 데이터에 쓰는 유사도는?',
+a:ul('<b>유클리드</b>: 직선 거리 / <b>맨해튼</b>: 절댓값 합 / <b>체비셰프</b>: 최대 차이','<b>민코프스키</b>: p=1 맨해튼, p=2 유클리드','<b>마할라노비스</b>: 변수 간 공분산·상관관계 고려','<b>표준화 거리</b>: 표준편차로 나눈 유클리드 거리','<b>자카드</b>: 집합·이진 데이터 (교집합/합집합) / <b>코사인</b>: 벡터 사잇각')},
+{t:'계층적 군집과 덴드로그램',p:'덴드로그램에서 군집 수는 어떻게 읽을까요?',
+a:ul('<b>최단연결법</b>: 가장 가까운 개체 간 거리 / <b>최장연결법</b>: 가장 먼 개체 간 거리','<b>중심연결법</b>: 중심 간 거리 / <b>평균연결법</b>: 모든 개체 간 평균','<b>와드연결법</b>: 군집 내 오차제곱합(SSE) 증가를 최소화','<b>덴드로그램</b>: 기준 높이의 가로선과 교차하는 세로선의 수 = 군집 수')},
+{t:'K-means와 DBSCAN',p:'K-means에서 k는 누가 정할까요?',
+a:ul('<b>K-means</b>: k를 사전에 지정. 중심 재계산을 반복. 이상치에 민감, 비구형 군집에 약함. 엘보우 방법(WSS 그래프)으로 k 추정','<b>DBSCAN</b>: 밀도 기반. 노이즈·이상치 분리, 군집 수 지정 불필요, 비구형 군집 가능','<b>GMM</b>: 혼합분포 군집, EM 알고리즘 사용')},
+{t:'SOM과 군집 평가',p:'SOM은 역전파를 사용할까요?',
+a:ul('<b>SOM</b>: 비지도 학습, 차원 축소와 군집화 동시 수행. 입력층과 경쟁층(2차원)이 완전 연결. 역전파가 아닌 경쟁 학습, 승자 뉴런 BMU','<b>실루엣 계수</b>: −1~1, 1에 가까울수록 좋음','<b>Dunn Index</b>: 클수록 좋음','<b>WSS</b>(군집 내 제곱합) 최소화 / <b>BSS</b>(군집 간 제곱합) 최대화, TSS = WSS + BSS')}
+]);
+qs('s21',[
+['pos','변수 간의 상관관계(공분산)를 함께 고려하는 거리는?','',['유클리드 거리','맨해튼 거리','마할라노비스 거리','체비셰프 거리'],2,'마할라노비스 거리는 변수들의 공분산을 반영합니다.'],
+['pos','이진(범주형) 데이터의 유사도를 구할 때 주로 사용하는 방법은?','',['유클리드 거리','맨해튼 거리','마할라노비스 거리','자카드 유사도'],3,'자카드 유사도는 교집합/합집합으로 이진 데이터에 사용합니다.'],
+['neg','K-means 군집에 대한 설명으로 옳지 않은 것은?','',['군집 수 k를 사전에 지정해야 한다.','이상치에 민감하다.','엘보우 방법으로 적절한 k를 추정할 수 있다.','알고리즘이 데이터를 보고 군집 수를 자동으로 결정한다.'],3,'k는 분석가가 지정하며, 엘보우나 실루엣으로 판단을 돕습니다.'],
+['calc','덴드로그램에서 기준선과 교차하는 세로선이 3개일 때 군집의 수는?','',['2개','3개','4개','5개'],1,'교차하는 세로선의 수가 군집 수입니다.'],
+['neg','SOM(자기조직화지도)에 대한 설명으로 옳지 않은 것은?','',['비지도 학습 방식이다.','차원 축소와 군집화를 동시에 수행한다.','입력층과 경쟁층이 완전 연결되어 있다.','오차 역전파 방식으로 학습한다.'],3,'SOM은 경쟁 학습을 하며 역전파를 사용하지 않습니다.'],
+['pos','DBSCAN에 대한 설명으로 옳은 것은?','',['군집 수를 사전에 지정해야 한다.','밀도 기반이며 노이즈를 군집에서 분리할 수 있다.','구형 군집만 찾을 수 있다.','모든 점이 반드시 어느 군집에 속한다.'],1,'DBSCAN은 군집 수 지정이 필요 없고 밀도가 낮은 점은 노이즈로 처리합니다.']
+]);
+
+sec('s22',3,'연관분석','지지도·신뢰도·향상도, Apriori, FP-Growth',[
+{t:'연관분석의 특징',p:'연관분석의 장점과 단점은?',
+a:ul('장바구니 분석. “A를 사면 B도 산다” 형태의 조건-결과 규칙을 찾음','<b>장점</b>: 결과가 이해하기 쉬움, 조건 반응이 명확','<b>단점</b>: 품목 수가 늘면 계산량이 기하급수적으로 증가')},
+{t:'지지도·신뢰도·향상도',p:'A→B의 세 지표 식을 써 보세요.',
+a:ul('<b>지지도</b> = P(A∩B) — 전체 중 A와 B가 동시에 발생','<b>신뢰도</b> = P(B|A) = P(A∩B)/P(A)','<b>향상도</b> = 신뢰도/P(B) = P(A∩B)/(P(A)P(B))','향상도 > 1 양의 상관 / = 1 독립 / < 1 음의 상관'),
+tip:'아래 계산기로 숫자를 바꿔가며 확인해 보세요.'},
+{t:'Apriori와 FP-Growth',p:'Apriori의 수행 순서는?',
+a:ul('<b>Apriori</b>: ① 최소 지지도 설정 → ② 개별 품목 중 최소 지지도를 넘는 품목 탐색 → ③ 그 품목들로 2개 품목 집합 생성 → ④ 반복해 빈발 품목 집합 탐색','<b>FP-Growth</b>: FP-tree 구조, 후보 생성 없이 빠르게 처리 (Apriori 보완)')}
+],'assoc');
+qs('s22',[
+['calc','전체 거래 100건, 우유 구매 40건, 빵 구매 30건, 우유와 빵 동시 구매 20건일 때 우유 → 빵의 신뢰도는?','',['0.2','0.5','0.67','1.0'],1,'신뢰도 = P(우유∩빵)/P(우유) = 20/40 = 0.5입니다.'],
+['calc','위 거래에서(전체 100, 우유 40, 빵 30, 동시 20) 우유 → 빵의 향상도는?','',['0.5','1.0','약 1.67','2.0'],2,'향상도 = 신뢰도/P(빵) = 0.5/0.3 ≈ 1.67입니다.'],
+['pos','연관규칙 A → B의 향상도가 1일 때의 해석은?','',['양의 상관관계','음의 상관관계','서로 독립','반드시 인과관계'],2,'향상도 1은 A와 B가 서로 독립임을 뜻합니다.'],
+['pos','Apriori 알고리즘의 수행 순서로 올바른 것은?','',['최소 지지도 설정 → 개별 품목 빈발 탐색 → 2개 품목 집합 생성 → 반복','2개 품목 집합 생성 → 최소 지지도 설정 → 개별 품목 탐색 → 반복','개별 품목 탐색 → 2개 품목 집합 생성 → 최소 지지도 설정 → 반복','최소 지지도 설정 → 2개 품목 집합 생성 → 개별 품목 탐색 → 반복'],0,'최소 지지도를 정한 뒤 작은 항목집합에서 큰 항목집합으로 확장합니다.'],
+['pos','연관분석의 단점으로 옳은 것은?','',['결과 해석이 매우 어렵다.','품목 수가 증가하면 계산량이 기하급수적으로 증가한다.','조건과 반응이 불명확하다.','비정형 데이터에만 적용할 수 있다.'],1,'장점은 결과 해석이 쉽고 조건 반응이 명확하다는 것입니다.']
+]);
+
+sec('s23',3,'R 출력 해석','summary, t.test, lm 출력 읽는 법',[
+{t:'summary() 읽기',p:'평균이 중앙값보다 크면 어떤 분포일까요?',
+a:ul('Min · 1st Qu.(Q1) · Median · Mean · 3rd Qu.(Q3) · Max','<b>IQR</b> = 3rd Qu. − 1st Qu.','Mean > Median → 오른쪽 꼬리가 긴 분포(왜도 > 0)','Q1보다 작은 값은 전체의 25%, Q3보다 작은 값은 75%','범주형 변수는 항목별 빈도가 출력됨')},
+{t:'t.test() 읽기',p:'p-value가 0.73이면 귀무가설은?',
+a:ul('<b>One Sample</b>: 관측치 수 n = df + 1 / <b>Two Sample</b>(등분산 가정): n = df + 2','<b>p-value ≥ 0.05</b> → 귀무가설 기각 못 함','95% 신뢰구간이 귀무가설 값을 <b>포함하면</b> 기각 못 함','sample estimates: 표본에서 계산된 평균(점추정량)')},
+{t:'lm() 출력 읽기',p:'모형 전체의 유의성은 어느 값을 볼까요?',
+a:ul('<b>Estimate</b>: 회귀계수. x가 1 증가하면 y가 Estimate만큼 변함(다른 변수 고정)','<b>Pr(>|t|)</b>: 각 계수의 유의성(0.05보다 작으면 유의)','<b>Multiple R-squared</b>: 모형의 설명력 / <b>Adjusted R-squared</b>: 변수 수를 보정, 보통 더 작음','<b>F-statistic의 p-value</b>: 모형 전체의 유의성','잔차 자유도 = n − k − 1')}
+]);
+qs('s23',[
+['code','다음 summary() 출력에 대한 설명으로 옳은 것은?','<pre>   weight\n Min.   :100\n 1st Qu.:150\n Median :180\n Mean   :200\n 3rd Qu.:230\n Max.   :400</pre>',['평균이 중앙값보다 크므로 왼쪽 꼬리가 긴 분포이다.','IQR은 80이다.','전체 데이터의 75%가 150보다 작다.','최댓값 400은 반드시 제거해야 하는 이상값이다.'],1,'IQR = 230 − 150 = 80입니다. 평균 > 중앙값이면 오른쪽 꼬리, 150은 Q1이므로 25%만 150보다 작고, 이상값은 반드시 제거하는 것이 아닙니다.'],
+['code','다음 t.test 결과에 대한 해석으로 옳지 않은 것은?','<pre>One Sample t-test\nt = 0.35, df = 24, p-value = 0.73\nalternative hypothesis: true mean is not equal to 60\n95 percent confidence interval:\n 57.2  62.8\nsample estimates:\nmean of x\n    60.0</pre>',['표본 크기는 25이다.','유의수준 0.05에서 귀무가설을 기각한다.','유의수준 0.05에서 귀무가설을 기각하지 못한다.','95% 신뢰구간이 60을 포함한다.'],1,'p-value 0.73 ≥ 0.05이므로 귀무가설을 기각하지 못합니다.'],
+['code','다음 회귀분석 결과에 대한 설명으로 옳은 것은?','<pre>Coefficients:\n            Estimate Std.Error t value Pr(>|t|)\n(Intercept)   5.00     1.20     4.17   0.0001 ***\nx1            2.00     0.40     5.00   0.0010 **\nx2           -0.50     0.58    -0.86   0.4000\n\nMultiple R-squared: 0.62, Adjusted R-squared: 0.60\nF-statistic p-value: < 0.001</pre>',['x2는 유의수준 0.05에서 통계적으로 유의하다.','x2가 고정일 때 x1이 1 증가하면 y는 평균 2.0 증가한다.','F통계량의 p-value로 볼 때 모형은 유의하지 않다.','수정 R²가 다중 R²보다 크다.'],1,'x2의 p-value는 0.40으로 비유의, F검정 p<0.001이므로 모형은 유의, 수정 R²(0.60)는 다중 R²(0.62)보다 작습니다.'],
+['pos','회귀분석 출력에서 모형 전체가 통계적으로 유의한지를 판단하는 값은?','',['개별 회귀계수의 t통계량','F통계량의 p-value','Residual standard error','Intercept의 Estimate'],1,'모형 전체의 유의성은 F검정의 p-value로 확인합니다.'],
+['calc','Two Sample t-test 결과 자유도(df)가 8이었다. 전체 관측치 수는? (등분산 가정)','',['8','9','10','16'],2,'두 표본 t검정에서 n = df + 2 = 10입니다.']
+]);
+/* ===================== app ===================== */
+(function(){
+'use strict';
+const KEY='adsp-study-v1';
+const $app=document.getElementById('app');
+const CIRC=['①','②','③','④'];
+const TYPE_LABEL={pos:'단일 선택',neg:'부적절한 것 고르기',combo:'가·나·다 조합',calc:'계산',code:'R 출력 해석'};
+
+let store={learned:{},seen:{},best:{},done:{},wrong:{},theme:''};
+try{
+  const raw=localStorage.getItem(KEY);
+  if(raw){const o=JSON.parse(raw); if(o&&typeof o==='object'){for(const k in o){store[k]=o[k];}}}
+}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+function applyTheme(){const r=document.documentElement; if(store.theme){r.setAttribute('data-theme',store.theme);}else{r.removeAttribute('data-theme');}}
+applyTheme();
+
+const secById={}, qBySec={}, qById={}, secIdx={};
+const cnt={1:0,2:0,3:0};
+SECS.forEach(s=>{secById[s.id]=s; cnt[s.subj]++; secIdx[s.id]=s.subj+'-'+cnt[s.subj];});
+QS.forEach(q=>{qById[q.id]=q; (qBySec[q.s]=qBySec[q.s]||[]).push(q);});
+
+let view={name:'home'};
+let learnSt={};
+let Q=null;
+let timer=null;
+
+function shuffle(a){a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t;} return a;}
+function steps(s){return s.cards.length+(s.tool?1:0);}
+function fmtTime(ms){ms=Math.max(0,ms); const s=Math.floor(ms/1000); const m=Math.floor(s/60); const r=s%60; return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0');}
+function lst(id){return learnSt[id]||(learnSt[id]={i:0,rev:{}});}
+function markSeen(sid,i){
+  const arr=store.seen[sid]||(store.seen[sid]=[]);
+  if(arr.indexOf(i)<0){arr.push(i);}
+  if(arr.length>=steps(secById[sid])){store.learned[sid]=true;}
+  save();
+}
+
+/* ---------- routing ---------- */
+function go(name,params){
+  view=Object.assign({name:name},params||{});
+  if(!(name==='quiz'&&Q&&Q.mode==='mock'&&!Q.finished)){stopTimer();}
+  render();
+  window.scrollTo(0,0);
+}
+function stopTimer(){if(timer){clearInterval(timer); timer=null;}}
+function startTimer(){
+  if(timer) return;
+  timer=setInterval(function(){
+    if(!Q||Q.mode!=='mock'||Q.finished){stopTimer(); return;}
+    const left=Q.deadline-Date.now();
+    if(left<=0){finishQuiz(); return;}
+    const el=document.getElementById('timer'); if(el){el.textContent=fmtTime(left);}
+  },1000);
+}
+
+/* ---------- views ---------- */
+function topbar(){
+  const lab=store.theme==='dark'?'Dark':store.theme==='light'?'Light':'Auto';
+  return '<div class="topbar"><button class="brand" data-act="home"><i></i>ADsP 스터디룸</button><button class="tbtn" data-act="theme">Theme: '+lab+'</button></div>';
+}
+function foot(){
+  return '<div class="foot">개인 학습용입니다. 꿈꾸는라이언 「데이터분석 준전문가 핵심 요약노트」를 단원별로 재구성했고, 문제는 기출 복원 후기의 출제 경향(부적절한 것 고르기, 가·나·다 조합, 계산, R 출력 해석)을 참고해 새로 만들었습니다. 최종 확인은 공식 교재와 기출로 하세요.</div>';
+}
+
+function secCard(s){
+  const n=(qBySec[s.id]||[]).length, seen=(store.seen[s.id]||[]).length, st=steps(s);
+  const b=store.best[s.id];
+  const p1=store.learned[s.id]?'<span class="pill ok">Learned</span>':'<span class="pill">'+seen+'/'+st+' cards</span>';
+  const p2=(b!=null)?'<span class="pill'+(b>=80?' ok':'')+'">Best '+b+'%</span>':'<span class="pill">'+n+' questions</span>';
+  return '<article class="sec"><div class="mono no">'+secIdx[s.id]+'</div><h3>'+s.title+'</h3><p class="blurb">'+s.blurb+'</p><div class="pills">'+p1+p2+'</div>'
+    +'<div class="row"><button class="btn btn-ghost" data-act="learn" data-sid="'+s.id+'">Learn</button><button class="btn btn-primary" data-act="quiz" data-sid="'+s.id+'">Quiz</button></div></article>';
+}
+
+function homeView(){
+  const learned=SECS.filter(s=>store.learned[s.id]).length;
+  const doneIds=Object.keys(store.done).filter(id=>qById[id]);
+  const correct=doneIds.filter(id=>store.done[id]).length;
+  const acc=doneIds.length?Math.round(correct/doneIds.length*100)+'%':'–';
+  const wrongN=Object.keys(store.wrong).filter(id=>qById[id]).length;
+  let h=topbar();
+  h+='<section class="hero"><h1>ADsP 스터디룸</h1><p>데이터분석 준전문가 핵심요약노트를 작은 단원으로 나눴습니다. 개념을 먼저 떠올려 보고, 단원마다 퀴즈로 바로 확인하세요. 퀴즈는 단원을 끝내지 않아도 언제든 풀 수 있습니다.</p>'
+    +'<div class="exam">50문항 · 90분 · 1과목 10 / 2과목 10 / 3과목 30 · 총점 60점 이상, 과목별 40% 미만 과락</div></section>';
+  h+='<div class="stats"><div class="stat"><b>'+learned+'/'+SECS.length+'</b><span>단원 학습</span></div><div class="stat"><b>'+doneIds.length+'/'+QS.length+'</b><span>푼 문제</span></div><div class="stat"><b>'+acc+'</b><span>정답률</span></div></div>';
+  h+='<div class="row actions"><button class="btn btn-primary" data-act="mix">Mixed quiz</button><button class="btn" data-act="mockintro">Mock exam (50)</button>'
+    +'<button class="btn" data-act="wrongreview" '+(wrongN?'':'aria-disabled="true"')+'>Review mistakes ('+wrongN+')</button></div>';
+  [1,2,3].forEach(function(n){
+    const list=SECS.filter(s=>s.subj===n);
+    const qn=list.reduce((a,s)=>a+(qBySec[s.id]||[]).length,0);
+    h+='<section class="subj s'+n+'"><div class="subj-h"><span class="sq"></span><h2>'+n+'과목 · '+SUBJ[n]+'</h2><span class="mono">'+list.length+' sections · '+qn+' questions</span></div><div class="secs">'+list.map(secCard).join('')+'</div></section>';
+  });
+  return h+foot();
+}
+
+/* ----- tools ----- */
+function toolHtml(kind){
+  if(kind==='cm'){
+    return '<div class="tool"><p class="note">오분류표의 네 칸 값을 바꿔 보며 지표가 어떻게 변하는지 확인하세요. (예시: TP 40, FP 10, FN 20, TN 30)</p>'
+    +'<div class="fields"><label class="field">TP (참 양성)<input id="cm-tp" type="number" min="0" value="40"></label><label class="field">FP (거짓 양성)<input id="cm-fp" type="number" min="0" value="10"></label><label class="field">FN (거짓 음성)<input id="cm-fn" type="number" min="0" value="20"></label><label class="field">TN (참 음성)<input id="cm-tn" type="number" min="0" value="30"></label></div>'
+    +'<div class="outs" id="tool-out"></div></div>';
+  }
+  return '<div class="tool"><p class="note">거래 건수를 바꿔 지지도·신뢰도·향상도를 확인하세요. 규칙은 A → B 입니다. (예시: 전체 100, A 40, B 30, A와 B 동시 20)</p>'
+    +'<div class="fields"><label class="field">전체 거래 수<input id="as-t" type="number" min="1" value="100"></label><label class="field">A 포함 거래 수<input id="as-a" type="number" min="0" value="40"></label><label class="field">B 포함 거래 수<input id="as-b" type="number" min="0" value="30"></label><label class="field">A, B 동시 거래 수<input id="as-ab" type="number" min="0" value="20"></label></div>'
+    +'<div class="outs" id="tool-out"></div></div>';
+}
+function pct(v){return (v==null||!isFinite(v))?'–':(v*100).toFixed(1)+'%';}
+function out(label,val){return '<div class="out"><span>'+label+'</span><b>'+val+'</b></div>';}
+function calcTool(){
+  const box=document.getElementById('tool-out'); if(!box) return;
+  const num=function(id){const el=document.getElementById(id); return el?(parseFloat(el.value)||0):0;};
+  if(document.getElementById('cm-tp')){
+    const tp=num('cm-tp'),fp=num('cm-fp'),fn=num('cm-fn'),tn=num('cm-tn'),tot=tp+fp+fn+tn;
+    const r=function(a,b){return b>0?a/b:null;};
+    const P=r(tp,tp+fp), R=r(tp,tp+fn), acc=r(tp+tn,tot);
+    const f1=(P!=null&&R!=null&&(P+R)>0)?2*P*R/(P+R):null;
+    box.innerHTML=out('정확도 (TP+TN)/전체',pct(acc))+out('정밀도 TP/(TP+FP)',pct(P))+out('재현율 TP/(TP+FN)',pct(R))+out('특이도 TN/(TN+FP)',pct(r(tn,tn+fp)))+out('F1',pct(f1))+out('오분류율',acc==null?'–':pct(1-acc));
+  }else if(document.getElementById('as-t')){
+    const t=num('as-t'),a=num('as-a'),b=num('as-b'),ab=num('as-ab');
+    if(t<=0||a<=0||b<=0||a>t||b>t||ab>a||ab>b){
+      box.innerHTML='<p class="warn">입력을 확인하세요. 0 < A, B ≤ 전체, 그리고 동시 거래 수 ≤ min(A, B) 이어야 합니다.</p>'; return;
+    }
+    const sup=ab/t, conf=ab/a, lift=conf/(b/t);
+    const note=Math.abs(lift-1)<0.005?'독립':(lift>1?'양의 상관':'음의 상관');
+    box.innerHTML=out('지지도 P(A∩B)',sup.toFixed(3))+out('신뢰도 P(B|A)',conf.toFixed(3))+out('향상도',lift.toFixed(2))+out('해석',note);
+  }
+}
+
+/* ----- learn ----- */
+function learnView(){
+  const s=secById[view.sid], L=lst(s.id), st=steps(s);
+  const i=Math.min(L.i,st-1);
+  const seen=store.seen[s.id]||[];
+  const idx=SECS.indexOf(s);
+  let h=topbar();
+  h+='<div class="crumb"><button data-act="home">All sections</button><span class="mono">/ '+secIdx[s.id]+' · '+SUBJ[s.subj]+'</span></div>';
+  h+='<h1 class="sec-title">'+s.title+'</h1><p class="sec-sub">'+s.blurb+'</p>';
+  h+='<div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true">Learn</button><button class="tab" role="tab" aria-selected="false" data-act="quiz" data-sid="'+s.id+'">Quiz ('+(qBySec[s.id]||[]).length+')</button></div>';
+  h+='<div class="dots">';
+  for(let k=0;k<st;k++){h+='<button class="dot'+(k===i?' cur':(seen.indexOf(k)>=0?' seen':''))+'" data-act="step" data-i="'+k+'" aria-label="Step '+(k+1)+'">'+(k+1)+'</button>';}
+  h+='</div>';
+  if(i<s.cards.length){
+    const c=s.cards[i], rev=L.rev[i];
+    h+='<div class="card"><h2>'+c.t+'</h2><div class="prompt"><span class="mono">TRY TO RECALL</span>'+c.p+'</div>';
+    if(rev){
+      h+='<div class="answer">'+c.a+(c.tip?'<div class="tip"><b>EXAM POINT</b>'+c.tip+'</div>':'')+'</div>';
+    }else{
+      h+='<div><button class="btn btn-primary" data-act="reveal">Show answer</button></div>';
+    }
+    h+='</div>';
+  }else{
+    h+='<div class="card"><h2>직접 계산해 보기</h2>'+toolHtml(s.tool)+'</div>';
+  }
+  h+='<div class="nav"><button class="btn" data-act="lprev" '+(i===0?'aria-disabled="true"':'')+'>← Previous</button>';
+  if(i<st-1){h+='<button class="btn btn-primary" data-act="lnext">Next →</button>';}
+  h+='</div>';
+  if(i===st-1){
+    const nx=SECS[idx+1];
+    h+='<div class="finish"><h3>이 단원 퀴즈로 확인해 볼까요?</h3><p class="note">'+(qBySec[s.id]||[]).length+'문제입니다. 틀린 문제는 Review mistakes에 모입니다.</p><div class="row"><button class="btn btn-primary" data-act="quiz" data-sid="'+s.id+'">Start quiz</button>'
+      +(nx?'<button class="btn" data-act="learn" data-sid="'+nx.id+'">Next section: '+nx.title+'</button>':'')+'<button class="btn btn-ghost" data-act="home">All sections</button></div></div>';
+  }
+  return h+foot();
+}
+
+/* ----- quiz ----- */
+function startQuiz(list,opts){
+  Q=Object.assign({list:list,i:0,ans:list.map(function(){return -1;}),locked:list.map(function(){return false;}),finished:false,mode:'practice',title:'Quiz',back:{name:'home'}},opts||{});
+  stopTimer();
+  if(Q.mode==='mock'){Q.deadline=Date.now()+90*60*1000;}
+  go('quiz');
+}
+function backBtn(){return '<button class="btn btn-ghost" data-act="qquit">'+(Q.mode==='mock'?'Quit exam':'Quit')+'</button>';}
+
+function questionView(){
+  const q=Q.list[Q.i], n=Q.list.length, mock=Q.mode==='mock';
+  const sel=Q.ans[Q.i], locked=Q.locked[Q.i];
+  let h=topbar();
+  h+='<div class="qhead"><span class="mono">'+Q.title+'</span><span class="row" style="align-items:center">'+(mock?'<span class="timer" id="timer">'+fmtTime(Q.deadline-Date.now())+'</span>':'')
+    +'<span class="tag">'+SUBJ[secById[q.s].subj]+'</span><span class="tag">'+TYPE_LABEL[q.t]+'</span></span></div>';
+  h+='<div class="bar"><i style="width:'+Math.round((Q.i+(locked||(mock&&sel>=0)?1:0))/n*100)+'%"></i></div>';
+  h+='<div class="card"><div class="mono">Q '+(Q.i+1)+' / '+n+'</div><div class="qtext">'+q.q+'</div>'+(q.box?'<div class="qbox">'+q.box+'</div>':'')+'<div class="opts">';
+  q.o.forEach(function(o,k){
+    let cls='';
+    if(mock){if(sel===k)cls=' sel';}
+    else if(locked){cls=' locked'+(k===q.a?' good':(k===sel?' bad':''));}
+    h+='<button class="opt'+cls+'" data-act="pick" data-k="'+k+'"><span class="n">'+CIRC[k]+'</span><span class="t">'+o+'</span></button>';
+  });
+  h+='</div>';
+  if(!mock&&locked){
+    const ok=sel===q.a;
+    h+='<div class="fb '+(ok?'good':'bad')+'"><strong>'+(ok?'정답입니다':'오답입니다. 정답은 '+CIRC[q.a]+'번')+'</strong><div>'+q.e+'</div></div>';
+  }
+  h+='</div>';
+  if(mock){
+    h+='<div class="palette">';
+    for(let k=0;k<n;k++){h+='<button data-act="qjump" data-i="'+k+'" class="'+(k===Q.i?'cur':(Q.ans[k]>=0?'ans':''))+'" aria-label="Question '+(k+1)+'">'+(k+1)+'</button>';}
+    h+='</div>';
+    const answered=Q.ans.filter(function(a){return a>=0;}).length;
+    h+='<div class="nav"><div class="row">'+backBtn()+'<button class="btn" data-act="qprev" '+(Q.i===0?'aria-disabled="true"':'')+'>← Prev</button></div><div class="row">'
+      +(Q.i<n-1?'<button class="btn btn-primary" data-act="qnext">Next →</button>':'')+'<button class="btn '+(Q.i===n-1?'btn-primary':'')+'" data-act="submit">Submit ('+answered+'/'+n+')</button></div></div>';
+  }else{
+    h+='<div class="nav">'+backBtn()+(locked?'<button class="btn btn-primary" data-act="qnext">'+(Q.i<n-1?'Next →':'See results')+'</button>':'<button class="btn btn-ghost" data-act="qnext">Skip →</button>')+'</div>';
+  }
+  return h+foot();
+}
+
+function resultView(){
+  const n=Q.list.length;
+  let c=0; const by={};
+  Q.list.forEach(function(q,i){
+    const ok=Q.ans[i]===q.a; if(ok)c++;
+    const sj=secById[q.s].subj; by[sj]=by[sj]||{c:0,n:0}; by[sj].n++; if(ok)by[sj].c++;
+  });
+  const p=Math.round(c/n*100);
+  let h=topbar();
+  h+='<div class="crumb"><span class="mono">'+Q.title+' · Results</span></div>';
+  h+='<div class="card"><div class="score"><span class="mono">SCORE</span><b>'+c+' / '+n+'</b><span>'+p+'%</span></div>';
+  const keys=Object.keys(by);
+  if(keys.length>1||Q.mode==='mock'){
+    h+='<div class="bysubj">'+keys.map(function(k){const b=by[k]; const bp=Math.round(b.c/b.n*100); return '<div><span>'+k+'과목 · '+SUBJ[k]+'</span><span class="mono">'+b.c+'/'+b.n+' ('+bp+'%)</span></div>';}).join('')+'</div>';
+  }
+  if(Q.mode==='mock'){
+    let low=[]; keys.forEach(function(k){if(by[k].c/by[k].n<0.4)low.push(k+'과목');});
+    const pass=p>=60&&!low.length;
+    h+='<p class="verdict" style="color:var(--'+(pass?'ok':'bad')+')">'+(pass?'합격 기준 충족 (연습 기준)':(low.length?'과락 발생: '+low.join(', '):'총점 60점 미만'))+'</p><p class="note">실제 시험은 총점 60점 이상이고 과목별 40% 미만이면 과락입니다. 이 결과는 연습용 추정입니다.</p>';
+  }
+  const wrong=[]; Q.list.forEach(function(q,i){if(Q.ans[i]!==q.a)wrong.push(q);});
+  h+='<div class="row"><button class="btn btn-primary" data-act="retry">Try again</button>'+(wrong.length?'<button class="btn" data-act="retrywrong">Retry mistakes ('+wrong.length+')</button>':'')+'<button class="btn btn-ghost" data-act="qquit">Back</button></div></div>';
+  h+='<h2 style="margin:26px 0 12px;font-size:20px">Review</h2><div class="rv">';
+  Q.list.forEach(function(q,i){
+    const ok=Q.ans[i]===q.a, sel=Q.ans[i];
+    h+='<details class="r '+(ok?'g':'b')+'"><summary><span class="mk">'+(ok?'O':'X')+'</span><span>'+(i+1)+'. '+q.q+'</span></summary><div class="body">'
+      +(q.box?'<div class="qbox">'+q.box+'</div>':'')
+      +'<div>내 답: '+(sel>=0?CIRC[sel]+' '+q.o[sel]:'—')+'</div><div>정답: '+CIRC[q.a]+' '+q.o[q.a]+'</div><div class="prompt">'+q.e+'</div></div></details>';
+  });
+  h+='</div>';
+  return h+foot();
+}
+
+function quizView(){return Q.finished?resultView():questionView();}
+
+function finishQuiz(){
+  if(!Q||Q.finished) return;
+  Q.finished=true; stopTimer();
+  if(Q.mode==='mock'){
+    Q.list.forEach(function(q,i){
+      if(Q.ans[i]<0) return;
+      const ok=Q.ans[i]===q.a; store.done[q.id]=ok;
+      if(ok){delete store.wrong[q.id];}else{store.wrong[q.id]=true;}
+    });
+  }
+  if(Q.secId&&Q.list.length===(qBySec[Q.secId]||[]).length){
+    let c=0; Q.list.forEach(function(q,i){if(Q.ans[i]===q.a)c++;});
+    const p=Math.round(c/Q.list.length*100);
+    if(store.best[Q.secId]==null||p>store.best[Q.secId]){store.best[Q.secId]=p;}
+  }
+  save(); render(); window.scrollTo(0,0);
+}
+
+/* ----- mix / mock ----- */
+function mixView(){
+  let h=topbar();
+  h+='<div class="crumb"><button data-act="home">All sections</button><span class="mono">/ Mixed quiz</span></div><h1 class="sec-title">Mixed quiz</h1><p class="sec-sub">고른 과목에서 틀렸던 문제와 아직 안 푼 문제를 먼저 섞어 출제합니다.</p>';
+  h+='<div class="card cfg"><div>'+[1,2,3].map(function(n){return '<label class="chk"><input type="checkbox" id="mx-'+n+'" checked>'+n+'과목 · '+SUBJ[n]+'</label>';}).join('')+'</div>'
+    +'<label class="field">Questions<select id="mx-n"><option>10</option><option>20</option><option>30</option></select></label>'
+    +'<div class="row"><button class="btn btn-primary" data-act="mixstart">Start</button><button class="btn btn-ghost" data-act="home">Cancel</button></div></div>';
+  return h+foot();
+}
+function mockIntroView(){
+  let h=topbar();
+  h+='<div class="crumb"><button data-act="home">All sections</button><span class="mono">/ Mock exam</span></div><h1 class="sec-title">Mock exam</h1><p class="sec-sub">실제 시험과 같은 구성으로 연습합니다.</p>';
+  h+='<div class="card"><ul><li>1과목 10문항, 2과목 10문항, 3과목 30문항으로 총 50문항입니다. 문제 은행 크기가 한정되어 있어 일부 문제는 단원 퀴즈와 겹칩니다.</li><li>제한 시간은 90분이며, 시간이 끝나면 자동으로 제출됩니다.</li><li>정답과 해설은 제출한 뒤에 한꺼번에 보여 줍니다. 제출 전에는 답을 바꿀 수 있습니다.</li><li>총점 60% 이상이고 과목별 40% 이상일 때 합격 기준을 충족한 것으로 표시합니다.</li></ul>'
+    +'<div class="row"><button class="btn btn-primary" data-act="mockstart">Start exam</button><button class="btn btn-ghost" data-act="home">Cancel</button></div></div>';
+  return h+foot();
+}
+function buildMix(subjs,n){
+  const pool=QS.filter(function(q){return subjs.indexOf(secById[q.s].subj)>=0;});
+  const w=function(q){return (store.wrong[q.id]?0:(store.done[q.id]===undefined?1:2))+Math.random()*0.9;};
+  const picked=pool.map(function(q){return {q:q,w:w(q)};}).sort(function(a,b){return a.w-b.w;}).slice(0,n).map(function(x){return x.q;});
+  return shuffle(picked);
+}
+function buildMock(){
+  let out=[];
+  [[1,10],[2,10],[3,30]].forEach(function(g){
+    const pool=shuffle(QS.filter(function(q){return secById[q.s].subj===g[0];}));
+    out=out.concat(pool.slice(0,g[1]));
+  });
+  return out;
+}
+
+/* ---------- render ---------- */
+function render(){
+  let h='';
+  switch(view.name){
+    case 'learn': h=learnView(); break;
+    case 'quiz': h=quizView(); break;
+    case 'mix': h=mixView(); break;
+    case 'mockintro': h=mockIntroView(); break;
+    default: h=homeView();
+  }
+  $app.innerHTML=h;
+  if(view.name==='quiz'&&Q&&Q.mode==='mock'&&!Q.finished){startTimer();}
+  calcTool();
+}
+
+/* ---------- events ---------- */
+$app.addEventListener('click',function(e){
+  const t=e.target.closest('[data-act]'); if(!t) return;
+  if(t.getAttribute('aria-disabled')==='true') return;
+  const a=t.dataset.act;
+  switch(a){
+    case 'home': go('home'); break;
+    case 'theme': store.theme=store.theme===''?'dark':(store.theme==='dark'?'light':''); applyTheme(); save(); render(); break;
+    case 'learn': go('learn',{sid:t.dataset.sid}); break;
+    case 'quiz': {
+      const sid=t.dataset.sid;
+      startQuiz((qBySec[sid]||[]).slice(),{title:secIdx[sid]+' '+secById[sid].title,secId:sid,back:(view.name==='learn'?{name:'learn',sid:sid}:{name:'home'})});
+      break;
+    }
+    case 'reveal': {const L=lst(view.sid); L.rev[L.i]=true; markSeen(view.sid,L.i); render(); break;}
+    case 'step': {const L=lst(view.sid); L.i=parseInt(t.dataset.i,10); if(L.i>=secById[view.sid].cards.length){markSeen(view.sid,L.i);} render(); break;}
+    case 'lprev': {const L=lst(view.sid); if(L.i>0){L.i--; render();} break;}
+    case 'lnext': {
+      const L=lst(view.sid); const s=secById[view.sid];
+      if(L.i<steps(s)-1){L.i++; if(L.i>=s.cards.length){markSeen(view.sid,L.i);} render();}
+      break;
+    }
+    case 'pick': {
+      if(!Q||Q.finished) break;
+      const k=parseInt(t.dataset.k,10), i=Q.i, q=Q.list[i];
+      if(Q.mode==='mock'){Q.ans[i]=k; render(); break;}
+      if(Q.locked[i]) break;
+      Q.ans[i]=k; Q.locked[i]=true;
+      const ok=(k===q.a); store.done[q.id]=ok;
+      if(ok){delete store.wrong[q.id];}else{store.wrong[q.id]=true;}
+      save(); render(); break;
+    }
+    case 'qnext': if(Q.i<Q.list.length-1){Q.i++; render(); window.scrollTo(0,0);}else{finishQuiz();} break;
+    case 'qprev': if(Q.i>0){Q.i--; render(); window.scrollTo(0,0);} break;
+    case 'qjump': Q.i=parseInt(t.dataset.i,10); render(); window.scrollTo(0,0); break;
+    case 'submit': finishQuiz(); break;
+    case 'qquit': {const b=Q?Q.back:{name:'home'}; stopTimer(); go(b.name,b); break;}
+    case 'retry': startQuiz(Q.list.slice(),{title:Q.title,secId:Q.secId,mode:Q.mode,back:Q.back}); break;
+    case 'retrywrong': {
+      const w=Q.list.filter(function(q,i){return Q.ans[i]!==q.a;});
+      startQuiz(w,{title:Q.title+' · mistakes',back:Q.back}); break;
+    }
+    case 'mix': go('mix'); break;
+    case 'mixstart': {
+      const subs=[1,2,3].filter(function(n){const el=document.getElementById('mx-'+n); return el&&el.checked;});
+      if(!subs.length) break;
+      const n=parseInt(document.getElementById('mx-n').value,10)||10;
+      startQuiz(buildMix(subs,n),{title:'Mixed quiz',back:{name:'home'}}); break;
+    }
+    case 'mockintro': go('mockintro'); break;
+    case 'mockstart': startQuiz(buildMock(),{title:'Mock exam',mode:'mock',back:{name:'home'}}); break;
+    case 'wrongreview': {
+      const list=Object.keys(store.wrong).map(function(id){return qById[id];}).filter(Boolean);
+      if(list.length){startQuiz(shuffle(list),{title:'Review mistakes',back:{name:'home'}});}
+      break;
+    }
+  }
+});
+$app.addEventListener('input',function(e){
+  const id=e.target&&e.target.id;
+  if(id&&(id.indexOf('cm-')===0||id.indexOf('as-')===0)){calcTool();}
+});
+
+render();
+})();
+</script>
